@@ -1,0 +1,11 @@
+# Apple detrius
+#
+.DS_Store
+
+# Python extras
+#
+venv27/
+venv35/
+__py_cache__
+*.pyc
+
