@@ -11,7 +11,7 @@ This repository contains example code to support a series of blog posts that dis
 
 * [Package Managers and Virtual Environments][https://www.develves.net/blogs/asd/2016-02-04-virtual-environments/]
 * [Using Virtual Environments - Python I][https://www.develves.net/blogs/asd/2016-02-11-using-virtual-environments-python-1/]
-* [Using Virtual Environments - Python II][https://www.develves.net/blogs/asd/2016-02-11-using-virtual-environments-python-2/]
+* [Using Virtual Environments - Python II][https://www.develves.net/blogs/asd/2016-02-18-using-virtual-environments-python-2/]
 
 _Note: Posts on Ruby and Node.js are forthcoming._
 
