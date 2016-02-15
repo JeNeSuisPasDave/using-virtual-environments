@@ -1,0 +1,143 @@
+# NOTE: expect that this is preceded by:
+# source check-functions.src
+#
+
+REDIS_EXP_VSN_=2.6
+REDIS_MAX_VSN_=2.7
+FLASK_EXP_VSN_=0.8
+FLASK_MAX_VSN_=0.9
+JINJA2_EXP_VSN_=2.4
+JINJA2_MAX_VSN_=2.5
+WERKZEUG_EXP_VSN_=0.6
+WERKZEUG_MAX_VSN_=0.7
+MARKUPSAFE_EXP_VSN_=0.23
+MARKUPSAFE_MAX_VSN_=0.24
+
+# Capture pip packages
+#
+PKGS_=`pip list`
+
+# Check whether redis installed
+#
+REDIS_INSTALLED_=`echo "${PKGS_}" | grep "^redis (" | wc -l | tr -d [[:space:]]`
+if [ 0 == ${REDIS_INSTALLED_} ]; then
+  echo
+  echo "ERROR: redis is not installed"
+  echo
+  echo "Try 'pip install redis' to install redis, and"
+  echo "then try '${SCRIPTNAME_}' again."
+  echo
+  exit 8
+fi
+REDIS_FULL_VSN_=`echo "${PKGS_}" | grep "^redis (" | sed -E 's/^.+\(([^\)]+)\)/\1/'`
+REDIS_VSN_MIN_OK_=`version_is_at_least "${REDIS_EXP_VSN_}" "${REDIS_FULL_VSN_}"`
+REDIS_VSN_MAX_OK_=`version_is_less_than "${REDIS_MAX_VSN_}" "${REDIS_FULL_VSN_}"`
+if (( 0 == ${REDIS_VSN_MIN_OK_} )) \
+  || (( 0 == ${REDIS_VSN_MAX_OK_} )); then
+  echo
+  echo -n "ERROR: Expecting redis ${REDIS_EXP_VSN_} or later, "
+  echo "up to ${REDIS_MAX_VSN_}."
+  echo "Found ${REDIS_FULL_VSN_}"
+  echo
+  exit 10
+fi
+
+# Check whether Flask installed
+#
+FLASK_INSTALLED_=`echo "${PKGS_}" | grep "^Flask (" | wc -l | tr -d [[:space:]]`
+if [ 0 == ${REDIS_INSTALLED_} ]; then
+  echo
+  echo "ERROR: Flask is not installed"
+  echo
+  echo "Try 'pip install Flask' to install Flask, and"
+  echo "then try '${SCRIPTNAME_}' again."
+  echo
+  exit 8
+fi
+FLASK_FULL_VSN_=`echo "${PKGS_}" | grep "^Flask (" | sed -E 's/^.+\(([^\)]+)\)/\1/'`
+FLASK_VSN_MIN_OK_=`version_is_at_least "${FLASK_EXP_VSN_}" "${FLASK_FULL_VSN_}"`
+FLASK_VSN_MAX_OK_=`version_is_less_than "${FLASK_MAX_VSN_}" "${FLASK_FULL_VSN_}"`
+if (( 0 == ${FLASK_VSN_MIN_OK_} )) \
+  || (( 0 == ${FLASK_VSN_MAX_OK_} )); then
+  echo
+  echo -n "ERROR: Expecting FLask ${FLASK_EXP_VSN_} or later, "
+  echo "up to ${FLASK_MAX_VSN_}."
+  echo "Found ${FLASK_FULL_VSN_}"
+  echo
+  exit 10
+fi
+
+# Check whether Jinja2 installed
+#
+JINJA2_INSTALLED_=`echo "${PKGS_}" | grep "^Jinja2 (" | wc -l | tr -d [[:space:]]`
+if [ 0 == ${REDIS_INSTALLED_} ]; then
+  echo
+  echo "ERROR: Jinja2 is not installed"
+  echo
+  echo "Try 'pip install Jinja2' to install Jinja2, and"
+  echo "then try '${SCRIPTNAME_}' again."
+  echo
+  exit 8
+fi
+JINJA2_FULL_VSN_=`echo "${PKGS_}" | grep "^Jinja2 (" | sed -E 's/^.+\(([^\)]+)\)/\1/'`
+JINJA2_VSN_MIN_OK_=`version_is_at_least "${JINJA2_EXP_VSN_}" "${JINJA2_FULL_VSN_}"`
+JINJA2_VSN_MAX_OK_=`version_is_less_than "${JINJA2_MAX_VSN_}" "${JINJA2_FULL_VSN_}"`
+if (( 0 == ${JINJA2_VSN_MIN_OK_} )) \
+  || (( 0 == ${JINJA2_VSN_MAX_OK_} )); then
+  echo
+  echo -n "ERROR: Expecting Jinja2 ${JINJA2_EXP_VSN_} or later, "
+  echo "up to ${JINJA2_MAX_VSN_}."
+  echo "Found ${JINJA2_FULL_VSN_}"
+  echo
+  exit 10
+fi
+
+# Check whether Werkzeug installed
+#
+WERKZEUG_INSTALLED_=`echo "${PKGS_}" | grep "^Werkzeug (" | wc -l | tr -d [[:space:]]`
+if [ 0 == ${REDIS_INSTALLED_} ]; then
+  echo
+  echo "ERROR: Werkzeug is not installed"
+  echo
+  echo "Try 'pip install Werkzeug' to install Werkzeug, and"
+  echo "then try '${SCRIPTNAME_}' again."
+  echo
+  exit 8
+fi
+WERKZEUG_FULL_VSN_=`echo "${PKGS_}" | grep "^Werkzeug (" | sed -E 's/^.+\(([^\)]+)\)/\1/'`
+WERKZEUG_VSN_MIN_OK_=`version_is_at_least "${WERKZEUG_EXP_VSN_}" "${WERKZEUG_FULL_VSN_}"`
+WERKZEUG_VSN_MAX_OK_=`version_is_less_than "${WERKZEUG_MAX_VSN_}" "${WERKZEUG_FULL_VSN_}"`
+if (( 0 == ${WERKZEUG_VSN_MIN_OK_} )) \
+  || (( 0 == ${WERKZEUG_VSN_MAX_OK_} )); then
+  echo
+  echo -n "ERROR: Expecting Werkzeug ${WERKZEUG_EXP_VSN_} or later, "
+  echo "up to ${WERKZEUG_MAX_VSN_}."
+  echo "Found ${WERKZEUG_FULL_VSN_}"
+  echo
+  exit 10
+fi
+
+# Check whether MarkupSafe installed
+#
+MARKUPSAFE_INSTALLED_=`echo "${PKGS_}" | grep "^MarkupSafe (" | wc -l | tr -d [[:space:]]`
+if [ 0 == ${REDIS_INSTALLED_} ]; then
+  echo
+  echo "ERROR: MarkupSafe is not installed"
+  echo
+  echo "Try 'pip install MarkupSafe' to install MarkupSafe, and"
+  echo "then try '${SCRIPTNAME_}' again."
+  echo
+  exit 8
+fi
+MARKUPSAFE_FULL_VSN_=`echo "${PKGS_}" | grep "^MarkupSafe (" | sed -E 's/^.+\(([^\)]+)\)/\1/'`
+MARKUPSAFE_VSN_MIN_OK_=`version_is_at_least "${MARKUPSAFE_EXP_VSN_}" "${MARKUPSAFE_FULL_VSN_}"`
+MARKUPSAFE_VSN_MAX_OK_=`version_is_less_than "${MARKUPSAFE_MAX_VSN_}" "${MARKUPSAFE_FULL_VSN_}"`
+if (( 0 == ${MARKUPSAFE_VSN_MIN_OK_} )) \
+  || (( 0 == ${MARKUPSAFE_VSN_MAX_OK_} )); then
+  echo
+  echo -n "ERROR: Expecting MarkupSafe ${MARKUPSAFE_EXP_VSN_} or later, "
+  echo "up to ${MARKUPSAFE_MAX_VSN_}."
+  echo "Found ${MARKUPSAFE_FULL_VSN_}"
+  echo
+  exit 10
+fi

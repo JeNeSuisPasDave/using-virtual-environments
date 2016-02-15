@@ -1,0 +1,10 @@
+# redis and its dependencies
+#
+redis>=2.6,<2.7
+
+# Flask and its dependencies
+#
+MarkupSafe==0.23
+Werkzeug>=0.6,<0.7
+Jinja2>=2.4,<2.5
+Flask>=0.8,<0.9
