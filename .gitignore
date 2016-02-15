@@ -4,8 +4,11 @@
 
 # Python extras
 #
-venv27/
-venv35/
+venv2*/
+venv3*/
 __py_cache__
 *.pyc
 
+# Sublime Text
+#
+*.sublime-workspace
