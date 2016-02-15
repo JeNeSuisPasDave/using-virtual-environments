@@ -2,16 +2,18 @@
 # source check-functions.src
 #
 
-REDIS_EXP_VSN_=2.6
-REDIS_MAX_VSN_=2.7
-FLASK_EXP_VSN_=0.8
-FLASK_MAX_VSN_=0.9
-JINJA2_EXP_VSN_=2.4
-JINJA2_MAX_VSN_=2.5
-WERKZEUG_EXP_VSN_=0.6
-WERKZEUG_MAX_VSN_=0.7
+REDIS_EXP_VSN_=2.10
+REDIS_MAX_VSN_=2.11
+FLASK_EXP_VSN_=0.10
+FLASK_MAX_VSN_=0.11
+JINJA2_EXP_VSN_=2.8
+JINJA2_MAX_VSN_=2.9
+WERKZEUG_EXP_VSN_=0.11
+WERKZEUG_MAX_VSN_=0.12
 MARKUPSAFE_EXP_VSN_=0.23
 MARKUPSAFE_MAX_VSN_=0.24
+ITSDANGEROUS_EXP_VSN_=0.24
+ITSDANGEROUS_MAX_VSN_=0.25
 
 # Capture pip packages
 #
@@ -138,6 +140,31 @@ if (( 0 == ${MARKUPSAFE_VSN_MIN_OK_} )) \
   echo -n "ERROR: Expecting MarkupSafe ${MARKUPSAFE_EXP_VSN_} or later, "
   echo "up to ${MARKUPSAFE_MAX_VSN_}."
   echo "Found ${MARKUPSAFE_FULL_VSN_}"
+  echo
+  exit 10
+fi
+
+# Check whether itsdangerous installed
+#
+ITSDANGEROUS_INSTALLED_=`echo "${PKGS_}" | grep "^itsdangerous (" | wc -l | tr -d [[:space:]]`
+if [ 0 == ${REDIS_INSTALLED_} ]; then
+  echo
+  echo "ERROR: itsdangerous is not installed"
+  echo
+  echo "Try 'pip install itsdangerous' to install itsdangerous, and"
+  echo "then try '${SCRIPTNAME_}' again."
+  echo
+  exit 8
+fi
+ITSDANGEROUS_FULL_VSN_=`echo "${PKGS_}" | grep "^itsdangerous (" | sed -E 's/^.+\(([^\)]+)\)/\1/'`
+ITSDANGEROUS_VSN_MIN_OK_=`version_is_at_least "${ITSDANGEROUS_EXP_VSN_}" "${ITSDANGEROUS_FULL_VSN_}"`
+ITSDANGEROUS_VSN_MAX_OK_=`version_is_less_than "${ITSDANGEROUS_MAX_VSN_}" "${ITSDANGEROUS_FULL_VSN_}"`
+if (( 0 == ${ITSDANGEROUS_VSN_MIN_OK_} )) \
+  || (( 0 == ${ITSDANGEROUS_VSN_MAX_OK_} )); then
+  echo
+  echo -n "ERROR: Expecting itsdangerous ${ITSDANGEROUS_EXP_VSN_} or later, "
+  echo "up to ${ITSDANGEROUS_MAX_VSN_}."
+  echo "Found ${ITSDANGEROUS_FULL_VSN_}"
   echo
   exit 10
 fi
