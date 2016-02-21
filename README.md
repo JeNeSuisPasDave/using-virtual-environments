@@ -7,6 +7,8 @@ This repository contains example code to support a series of blog posts that dis
 [node]: https://nodejs.org/en/
 [go]: https://golang.org/
 
+Examples are primarily developed on OS X, but where possible examples are also provided for Windows.
+
 ## Posts
 
 * [Package Managers and Virtual Environments][https://www.develves.net/blogs/asd/2016-02-04-virtual-environments/]
