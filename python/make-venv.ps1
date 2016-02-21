@@ -4,125 +4,128 @@
 # If Python 2.7 is installed some other way, then the script will
 # need some adjustment.
 #
+Set-Strictmode -version Latest
 
 # Capture the file name of this powershell script
 #
-$SCRIPTNAME_ = $MyInvocation.InvocationName
+$scriptName_ = $MyInvocation.InvocationName
 
-$VENV_DIRNAME_ = "venv27"
-$SAVE_VENV_DIRNAME_=""
-$PYTHON_VERSION_ = "2.7"
-$PYTHON_INSTALLBASE_ = "C:\Program Files\Python $PYTHON_VERSION_"
+$venvDirName_ = "venv27"
+$save_venvDirName_ = "$venvDirName_" + "_bkup"
+$pythonVersion_ = "2.7"
+$pythonInstallbase_ = "C:\Program Files\Python $pythonVersion_"
 
 # Check whether Python 2.7 is installed
 #
-$PYTHON_INSTALLED_ = Get-ChildItem "$PYTHON_INSTALLBASE_" |
+$pythonInstalled_ = Get-ChildItem "$pythonInstallbase_" |
   Where-Object {($_.Name -eq "python.exe")}
-If ($PYTHON_INSTALLED_ -eq $null)
+If ($pythonInstalled_ -eq $null)
 {
-  echo ""
-  echo "ERROR: Python 2.7 is not installed."
-  echo "       Expected '$PYTHON_INSTALLBASE_\python.exe'"
-  echo "Install Python 2.7 and then try '.\$SCRIPTNAME_' again."
-  return $false
+  Write-Output ""
+  Write-Output "ERROR: Python 2.7 is not installed."
+  Write-Output "       Expected '$pythonInstallbase_\python.exe'"
+  Write-Output "Install Python 2.7 and then try '.\$scriptName_' again."
+  Exit
 }
 
 # Check whether we are running in a python virtual environment
 #
-$VENV_RUNNING_ = Get-ChildItem env: | Where-Object {($_.Name -eq "VIRTUAL_ENV")}
-If ($VENV_RUNNING_ -ne $null)
+$venvRunning_ = Get-ChildItem env: | Where-Object {($_.Name -eq "VIRTUAL_ENV")}
+If ($venvRunning_ -ne $null)
 {
-  echo ""
-  echo "ERROR: Python virtual environment already running"
-  echo ""
-  echo "Try 'deactivate' to stop the virtual environment, and"
-  echo "then try '.\$SCRIPTNAME_' again."
-  echo ""
-  return $false
+  Write-Output ""
+  Write-Output "ERROR: Python virtual environment already running"
+  Write-Output ""
+  Write-Output "Try 'deactivate' to stop the virtual environment, and"
+  Write-Output "then try '.\$scriptName_' again."
+  Write-Output ""
+  Exit
 }
 
 # Check whether the virtual environment directory already exists
 #
-If (Test-Path ".\$VENV_DIRNAME_")
+If (Test-Path ".\$venvDirName_")
 {
-  echo ""
-  echo "WARNING: virtual environment directory '.\$VENV_DIRNAME_' already exists."
+  Write-Output ""
+  Write-Output ("WARNING: virtual environment directory '.\$venvDirName_' " `
+    + "already exists.")
   $yesno_ = Read-Host "Do you want to delete and replace it? [y/N]"
   if ($yesno_ -ne 'y')
   {
-    echo "No action taken".
-    return $true
+    Write-Output "No action taken."
+    Exit
   }
   # Rename the existing directory
   #
-  $SAVE_VENV_DIRNAME_ = "$VENV_DIRNAME_" + "_bkup"
-  Move-Item ".\$VENV_DIRNAME_" ".\$SAVE_VENV_DIRNAME_"
+  Move-Item ".\$venvDirName_" ".\$save_venvDirName_"
 }
 
 # Check that virtualenv is installed
 #
-$rcmd = "$PYTHON_INSTALLBASE_\Scripts\pip.exe"
-$rargs = "list 2>&1" -split " "
-$piplist = & $rcmd $rargs
-$VIRTUALENV_INSTALLED_ = $piplist | Where-Object {($_ -Like "virtualenv (*")}
-If ($VIRTUALENV_INSTALLED_ -eq $null)
+$rcmd_ = "$pythonInstallbase_\Scripts\pip.exe"
+$rargs_ = "list 2>&1" -split " "
+$piplist = & $rcmd_ $rargs_
+$virtualenvInstalled_ = $piplist | Where-Object {($_ -Like "virtualenv (*")}
+If ($virtualenvInstalled_ -eq $null)
 {
-  echo ""
-  echo "ERROR: virtualenv is not installed"
-  echo ""
-  echo "Try '$PYTHON_INSTALLBASE_\Scripts\pip.exe install virtualenv' to "
-  echo "install virtualenv, and then try '.\$SCRIPTNAME_' again."
-  echo ""
-  return $false
+  Write-Output ""
+  Write-Output "ERROR: virtualenv is not installed"
+  Write-Output ""
+  Write-Output "Try '$rcmd_ install virtualenv' to "
+  Write-Output "install virtualenv, and then try '.\$scriptName_' again."
+  Write-Output ""
+  Exit
 }
 
 # Create the virtual environment directory (the deployment folder)
 #
-& "$PYTHON_INSTALLBASE_\python.exe" -m virtualenv "$VENV_DIRNAME_"
-If (Test-Path ".\$VENV_DIRNAME_")
+& "$pythonInstallbase_\python.exe" -m virtualenv "$venvDirName_"
+If (Test-Path ".\$venvDirName_")
 {
-  If (Test-Path ".\$SAVE_VENV_DIRNAME_")
+  If (Test-Path ".\$save_venvDirName_")
   {
-    Remove-Item -Recurse ".\$SAVE_VENV_DIRNAME_"
+    Remove-Item -Recurse ".\$save_venvDirName_"
   }
 }
 else
 {
-  echo "ERROR: virtual environment not created."
-  If (Test-Path ".\$SAVE_VENV_DIRNAME_")
+  Write-Output "ERROR: virtual environment not created."
+  If (Test-Path ".\$save_venvDirName_")
   {
-    Move-Item ".\$SAVE_VENV_DIRNAME_" ".\$VENV_DIRNAME_"
+    Move-Item ".\$save_venvDirName_" ".\$venvDirName_"
   }
-  return $false
+  Exit
 }
 
 # Activate the virtual environment
 #
-& .\venv27\Scripts\Activate.ps1
+& .\$venvDirName_\Scripts\Activate.ps1
 
 # Check whether we are running in a python virtual environment
 #
-$VENV_RUNNING_ = Get-ChildItem env: | Where-Object {($_.Name -eq "VIRTUAL_ENV")}
-If ($VENV_RUNNING_ -eq $null)
+$venvRunning_ = Get-ChildItem env: | Where-Object {($_.Name -eq "VIRTUAL_ENV")}
+If ($venvRunning_ -eq $null)
 {
-  echo "ERROR: Python virtual environment was not activated; not running"
-  return $false
+  Write-Output ("ERROR: Python virtual environment was not activated; " `
+    + " not running")
+  Exit
 }
 
 # Check whether we are running Python 2.7
 #
-$rcmd = "python"
-$rargs = "--version 2>&1" -split " "
-$vsn = & $rcmd $rargs
-if ($vsn -NotLike "Python 2.*")
+$rcmd_ = "python"
+$rargs_ = "--version 2>&1" -split " "
+$vsn_ = Invoke-Expression "$rcmd_ $rargs_"
+if ($vsn_ -NotLike "Python 2.*")
 {
-  echo "ERROR: Python 2.7 or later is required. Found '$vsn'."
-  echo ""
-  echo "Deactivate the current virtual environment."
-  echo "Try '.\venv27\Scripts\Activate.ps1' to start the virtual environment, and"
-  echo "then try '.\$SCRIPTNAME_' again."
-  echo ""
-  return $false
+  Write-Output "ERROR: Python 2.7 or later is required. Found '$vsn'."
+  Write-Output ""
+  Write-Output "Deactivate the current virtual environment."
+  Write-Output ("Try '.\venv27\Scripts\Activate.ps1' to start the virtual " `
+    + "environment, and")
+  Write-Output "then try '.\$scriptName_' again."
+  Write-Output ""
+  Exit
 }
 
 # Update setuptools and pip
@@ -136,8 +139,8 @@ deactivate
 
 # Done!
 #
-echo ""
-echo "OK. Virtual environment for Python 2.7 is created."
-echo "Use command '.\venv27\Scripts\Activate.ps1' to start;"
-echo "Use command 'deactivate' to stop."
-echo ""
+Write-Output ""
+Write-Output "OK. Virtual environment for Python 2.7 is created."
+Write-Output "Use command '.\venv27\Scripts\Activate.ps1' to start;"
+Write-Output "Use command 'deactivate' to stop."
+Write-Output ""

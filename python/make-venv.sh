@@ -41,7 +41,7 @@ if [ -e "./${VENV_DIRNAME_}" ]; then
   echo    # (optional) move to a new line
   if [[ ! $REPLY =~ ^[Yy]$ ]]
   then
-    echo "No action taken".
+    echo "No action taken."
     exit 6
   fi
   # Rename the existing directory
