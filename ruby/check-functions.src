@@ -218,6 +218,7 @@ version_is_less_than() {
       elif (( ${MAX_PATCH_} == ${ACT_PATCH_} )); then
         if (( ${MAX_QUAL_} > ${ACT_QUAL_} )); then
           OK_=1
+        fi
       fi
     fi
   fi
