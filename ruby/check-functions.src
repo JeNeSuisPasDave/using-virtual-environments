@@ -1,3 +1,105 @@
+# is_this_ruby_active()
+#
+# Check if the Ruby version we want is active and local
+#
+is_this_ruby_active() {
+  if [[ 2 < $# ]]; then
+    echo "ERROR: too many arguments for 'is_this_ruby_available()'"
+    return 1
+  fi
+  if [ -z "$1" ]; then
+    echo "ERROR: missing version string for 'is_this_ruby_available()'"
+    return 1
+  fi
+  is_this_ruby_active=0
+
+  # Parse the input version number
+  #
+  parse_version "$1"
+  if (( 0 != $? )); then
+    echo "ERROR: failed to parse version in 'is_this_ruby_active()'"
+    return 2
+  fi
+  local RUBY_VERSION_PARTS_=( ${parse_version[@]} )
+
+  # Check the active version
+  #
+  local ACTIVE_=`rbenv version`
+  local RE_FIRST_='s/^([^(]+)\(.+\)$/\1/'
+  local ACTIVE_VSN_=`echo "${ACTIVE_}" | sed -E ${RE_FIRST_}`
+  local RE_SECOND_='s/^.+\(set.by.(.+)\)$/\1/'
+  local ACTIVE_FILE_=`echo "${ACTIVE_}" | sed -E ${RE_SECOND_}`
+  local THIS_DIRPATH_=`pwd`
+  local ACTIVE_FILE_DIRPATH_=$(dirname "$ACTIVE_FILE_")
+  if [[ "${THIS_DIRPATH_}" != "${ACTIVE_FILE_DIRPATH_}" ]]; then
+    echo "ERROR: rbenv has not set the local Ruby version for this project."
+    return 4
+  fi
+  parse_version "${ACTIVE_VSN_}"
+  if (( 0 != $? )); then
+    echo "ERROR: failed to parse version in 'is_this_ruby_active()'"
+    return 2
+  fi
+  local ACTIVE_VSN_PARTS_=( ${parse_version[@]} )
+
+  # Compare versions
+  #
+  if [[ "${RUBY_VERSION_PARTS_[@]}" == "${ACTIVE_VSN_PARTS_[@]}" ]]; then
+    is_this_ruby_active=1
+  fi
+
+  # Get out
+  #
+  return 0
+}
+
+# is_this_ruby_available()
+#
+# Check if the Ruby version we want is available
+#
+is_this_ruby_available() {
+  if [[ 2 < $# ]]; then
+    echo "ERROR: too many arguments for 'is_this_ruby_available()'"
+    return 1
+  fi
+  if [ -z "$1" ]; then
+    echo "ERROR: missing version string for 'is_this_ruby_available()'"
+    return 1
+  fi
+  is_this_ruby_available=0
+
+  # Parse the input version number
+  #
+  parse_version "$1"
+  if (( 0 != $? )); then
+    echo "ERROR: failed to parse version in 'is_this_ruby_available()'"
+    return 2
+  fi
+  local RUBY_VERSION_PARTS_=( ${parse_version[@]} )
+
+  # Check the installed versions
+  #
+  local RBENV_VERSIONS_=( `rbenv versions --bare` )
+  for (( i = 0 ; i < ${#RBENV_VERSIONS_[@]} ; i++ ))
+  do
+    local VSN_="${RBENV_VERSIONS_[$i]}"
+    parse_version "${VSN_}"
+    if (( 0 != $? )); then
+      continue;
+    fi
+    local VSN_PARTS_=( ${parse_version[@]} )
+    if [[ "${RUBY_VERSION_PARTS_[@]}" == "${VSN_PARTS_[@]}" ]]; then
+      # Found!
+      is_this_ruby_available=1
+      break
+    fi
+  done
+
+  # Get out
+  #
+  return 0
+}
+
 # parse_version()
 #
 # A function to convert a Python or Ruby version string into a normalized
@@ -17,7 +119,7 @@ parse_version() {
   # Initialize result and local variables
   #
   local STD_VSN_=( "0" "0" "0" "" )
-  IFS_SAVE_="${IFS}"
+  local IFS_SAVE_="${IFS}"
   parse_version=( ${STD_VSN_[@]} )
 
   # Split the version into tokens
@@ -29,34 +131,68 @@ parse_version() {
   # Assemble the normalized version number
   #
   local VSN_ARRAY_LEN_=${#VSN_ARRAY_[@]}
-  RE_SUB_MATCH='^([0-9]+)[.-]?.*$'
-  RE_SUB_='s/^([0-9]+)[.-]?.*$/\1/'
-  RE_SUB2_='s/^[0-9]*[.-]?(.+)$/\1/'
+  local RE_NUM_MATCH='^[0-9]+$'
+  local RE_SUB_MATCH='^[0-9]+[.-]?.*$'
+  local RE_SUB_='s/^([0-9]+)[.-]?.*$/\1/'
+  local RE_SUB2_='s/^[0-9]*[.-]?(.+)$/\1/'
   if (( 4 <= $VSN_ARRAY_LEN_ )); then
     # assuming 9.9.9.9
-    STD_VSN_[0]=${VSN_ARRAY_[0]}
-    STD_VSN_[1]=${VSN_ARRAY_[1]}
-    STD_VSN_[2]=${VSN_ARRAY_[2]}
-    STD_VSN_[3]=${VSN_ARRAY_[3]}
+    if [[ ${VSN_ARRAY_[0]} =~ ${RE_NUM_MATCH} ]]; then
+      STD_VSN_[0]=${VSN_ARRAY_[0]}
+    else
+      return 1
+    fi
+    if [[ ${VSN_ARRAY_[1]} =~ ${RE_NUM_MATCH} ]]; then
+      STD_VSN_[1]=${VSN_ARRAY_[1]}
+    else
+      return 1
+    fi
+    if [[ ${VSN_ARRAY_[2]} =~ ${RE_NUM_MATCH} ]]; then
+      STD_VSN_[2]=${VSN_ARRAY_[2]}
+      STD_VSN_[3]=${VSN_ARRAY_[3]}
+    else
+      return 1
+    fi
   elif (( 3 == $VSN_ARRAY_LEN_ )); then
     # assuming 9.9.9 or 9.9.9-p123 or 9.9p123
-    STD_VSN_[0]=${VSN_ARRAY_[0]}
-    STD_VSN_[1]=${VSN_ARRAY_[1]}
-    if [[ ${VSN_ARRAY_[2]} =~ ${RE_SUB_MATCH} ]]; then
+    if [[ ${VSN_ARRAY_[0]} =~ ${RE_NUM_MATCH} ]]; then
+      STD_VSN_[0]=${VSN_ARRAY_[0]}
+    else
+      return 1
+    fi
+    if [[ ${VSN_ARRAY_[1]} =~ ${RE_NUM_MATCH} ]]; then
+      STD_VSN_[1]=${VSN_ARRAY_[1]}
+    else
+      return 1
+    fi
+    if [[ ${VSN_ARRAY_[2]} =~ ${RE_NUM_MATCH} ]]; then
+      STD_VSN_[2]=${VSN_ARRAY_[2]}
+    elif [[ ${VSN_ARRAY_[2]} =~ ${RE_SUB_MATCH} ]]; then
       STD_VSN_[2]=`echo ${VSN_ARRAY_[2]} | sed -E ${RE_SUB_}`
     fi
     STD_VSN_[3]=`echo ${VSN_ARRAY_[2]} | sed -E ${RE_SUB2_}`
   elif (( 2 == $VSN_ARRAY_LEN_ )); then
     # assuming 9.9 or 9.9-p123 or 9p123
-    STD_VSN_[0]=${VSN_ARRAY_[0]}
-    if [[ ${VSN_ARRAY_[1]} =~ ${RE_SUB_MATCH} ]]; then
+    if [[ ${VSN_ARRAY_[0]} =~ ${RE_NUM_MATCH} ]]; then
+      STD_VSN_[0]=${VSN_ARRAY_[0]}
+    else
+      return 1
+    fi
+    if [[ ${VSN_ARRAY_[1]} =~ ${RE_NUM_MATCH} ]]; then
+      STD_VSN_[1]=${VSN_ARRAY_[1]}
+    elif [[ ${VSN_ARRAY_[1]} =~ ${RE_SUB_MATCH} ]]; then
       STD_VSN_[1]=`echo ${VSN_ARRAY_[1]} | sed -E ${RE_SUB_}`
     fi
     STD_VSN_[3]=`echo ${VSN_ARRAY_[1]} | sed -E ${RE_SUB2_}`
   elif (( 1 == $VSN_ARRAY_LEN_ )); then
     # assuming 9 or 9-p123
-    if [[ ${VSN_ARRAY_[0]} =~ ${RE_SUB_MATCH} ]]; then
+    if [[ ${VSN_ARRAY_[0]} =~ ${RE_NUM_MATCH} ]]; then
+      STD_VSN_[0]=${VSN_ARRAY_[0]}
+    elif [[ ${VSN_ARRAY_[0]} =~ ${RE_SUB_MATCH} ]]; then
       STD_VSN_[0]=`echo ${VSN_ARRAY_[0]} | sed -E ${RE_SUB_}`
+    else
+      # no major version
+      return 1
     fi
     STD_VSN_[3]=`echo ${VSN_ARRAY_[0]} | sed -E ${RE_SUB2_}`
   else
@@ -95,8 +231,8 @@ version_is_at_least() {
     return 0
   fi
 
-  EXP_=$1
-  ACT_=$2
+  local EXP_=$1
+  local ACT_=$2
 
   # Tokenize the expected version
   #
@@ -105,11 +241,11 @@ version_is_at_least() {
     echo "ERROR: failed to parse expected version '$EXP_'"
     exit 2
   fi
-  EXP_PARTS_=( ${parse_version[@]} )
-  EXP_MAJOR_=${EXP_PARTS_[0]}
-  EXP_MINOR_=${EXP_PARTS_[1]}
-  EXP_PATCH_=${EXP_PARTS_[2]}
-  EXP_QUAL_=${EXP_PARTS_[3]}
+  local EXP_PARTS_=( ${parse_version[@]} )
+  local EXP_MAJOR_=${EXP_PARTS_[0]}
+  local EXP_MINOR_=${EXP_PARTS_[1]}
+  local EXP_PATCH_=${EXP_PARTS_[2]}
+  local EXP_QUAL_=${EXP_PARTS_[3]}
 
   # Tokenize the actual version
   #
@@ -118,16 +254,16 @@ version_is_at_least() {
     echo "ERROR: failed to parse actual version '$ACT_'"
     exit 2
   fi
-  ACT_PARTS_=( ${parse_version[@]} )
-  ACT_MAJOR_=${ACT_PARTS_[0]}
-  ACT_MINOR_=${ACT_PARTS_[1]}
-  ACT_PATCH_=${ACT_PARTS_[2]}
-  ACT_QUAL_=${ACT_PARTS_[3]}
+  local ACT_PARTS_=( ${parse_version[@]} )
+  local ACT_MAJOR_=${ACT_PARTS_[0]}
+  local ACT_MINOR_=${ACT_PARTS_[1]}
+  local ACT_PATCH_=${ACT_PARTS_[2]}
+  local ACT_QUAL_=${ACT_PARTS_[3]}
 
   # Test the actual versus expected version. If actual is >= expected
   # then return 1; else, return 0.
   #
-  OK_=1
+  local OK_=1
   if (( ${EXP_MAJOR_} > ${ACT_MAJOR_} )); then
     OK_=0
   elif (( ${EXP_MAJOR_} == ${ACT_MAJOR_} )); then
@@ -174,8 +310,8 @@ version_is_less_than() {
     return 0
   fi
 
-  MAX_=$1
-  ACT_=$2
+  local MAX_=$1
+  local ACT_=$2
 
   # Tokenize the maximum version
   #
@@ -184,11 +320,11 @@ version_is_less_than() {
     echo "ERROR: failed to parse maximum version '$MAX_'"
     exit 2
   fi
-  MAX_PARTS_=( ${parse_version[@]} )
-  MAX_MAJOR_=${MAX_PARTS_[0]}
-  MAX_MINOR_=${MAX_PARTS_[1]}
-  MAX_PATCH_=${MAX_PARTS_[2]}
-  MAX_QUAL_=${MAX_PARTS_[3]}
+  local MAX_PARTS_=( ${parse_version[@]} )
+  local MAX_MAJOR_=${MAX_PARTS_[0]}
+  local MAX_MINOR_=${MAX_PARTS_[1]}
+  local MAX_PATCH_=${MAX_PARTS_[2]}
+  local MAX_QUAL_=${MAX_PARTS_[3]}
 
   # Tokenize the actual version
   #
@@ -197,16 +333,16 @@ version_is_less_than() {
     echo "ERROR: failed to parse actual version '$ACT_'"
     exit 2
   fi
-  ACT_PARTS_=( ${parse_version[@]} )
-  ACT_MAJOR_=${ACT_PARTS_[0]}
-  ACT_MINOR_=${ACT_PARTS_[1]}
-  ACT_PATCH_=${ACT_PARTS_[2]}
-  ACT_QUAL_=${ACT_PARTS_[3]}
+  local ACT_PARTS_=( ${parse_version[@]} )
+  local ACT_MAJOR_=${ACT_PARTS_[0]}
+  local ACT_MINOR_=${ACT_PARTS_[1]}
+  local ACT_PATCH_=${ACT_PARTS_[2]}
+  local ACT_QUAL_=${ACT_PARTS_[3]}
 
   # Test the actual versus maximum version. If actual is >= maximum
   # then return 1; else, return 0.
   #
-  OK_=0
+  local OK_=0
   if (( ${MAX_MAJOR_} > ${ACT_MAJOR_} )); then
     OK_=1
   elif (( ${MAX_MAJOR_} == ${ACT_MAJOR_} )); then

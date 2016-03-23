@@ -9,6 +9,10 @@ venv3*/
 __py_cache__
 *.pyc
 
+# Ruby and rbenv extras
+#
+.ruby-version
+
 # Sublime Text
 #
 *.sublime-workspace
