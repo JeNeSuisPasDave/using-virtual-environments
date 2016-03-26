@@ -122,19 +122,25 @@ parse_version() {
   local IFS_SAVE_="${IFS}"
   parse_version=( ${STD_VSN_[@]} )
 
+  # Strip any leading substring from the version string (e.g., for
+  # "rbenv 0.4.0" strip the leading "rbenv ")
+  #
+  RE_LEADTOKEN_='s/^[^[:digit:]][^[:space:]]*[[:space:]](.+)$/\1/'
+  STRIPPED_VSN_=`echo "$1" | sed -E ${RE_LEADTOKEN_}`
+
   # Split the version into tokens
   #
   local IFS='.'
-  local VSN_ARRAY_=($1)
+  local VSN_ARRAY_=($STRIPPED_VSN_)
   IFS="${IFS_SAVE_}"
 
   # Assemble the normalized version number
   #
   local VSN_ARRAY_LEN_=${#VSN_ARRAY_[@]}
   local RE_NUM_MATCH='^[0-9]+$'
-  local RE_SUB_MATCH='^[0-9]+[.-]?.*$'
-  local RE_SUB_='s/^([0-9]+)[.-]?.*$/\1/'
-  local RE_SUB2_='s/^[0-9]*[.-]?(.+)$/\1/'
+  local RE_SUB_MATCH='^[0-9]+[.-]?.+$'
+  local RE_SUB_='s/^([0-9]+)[.-]?.+$/\1/'
+  local RE_SUB2_='s/^[0-9]*[.-]?([^[:space:]]+).*$/\1/'
   if (( 4 <= $VSN_ARRAY_LEN_ )); then
     # assuming 9.9.9.9
     if [[ ${VSN_ARRAY_[0]} =~ ${RE_NUM_MATCH} ]]; then
@@ -169,8 +175,10 @@ parse_version() {
       STD_VSN_[2]=${VSN_ARRAY_[2]}
     elif [[ ${VSN_ARRAY_[2]} =~ ${RE_SUB_MATCH} ]]; then
       STD_VSN_[2]=`echo ${VSN_ARRAY_[2]} | sed -E ${RE_SUB_}`
+      STD_VSN_[3]=`echo ${VSN_ARRAY_[2]} | sed -E ${RE_SUB2_}`
+    else
+      STD_VSN_[3]=`echo ${VSN_ARRAY_[2]} | sed -E ${RE_SUB2_}`
     fi
-    STD_VSN_[3]=`echo ${VSN_ARRAY_[2]} | sed -E ${RE_SUB2_}`
   elif (( 2 == $VSN_ARRAY_LEN_ )); then
     # assuming 9.9 or 9.9-p123 or 9p123
     if [[ ${VSN_ARRAY_[0]} =~ ${RE_NUM_MATCH} ]]; then
@@ -182,19 +190,21 @@ parse_version() {
       STD_VSN_[1]=${VSN_ARRAY_[1]}
     elif [[ ${VSN_ARRAY_[1]} =~ ${RE_SUB_MATCH} ]]; then
       STD_VSN_[1]=`echo ${VSN_ARRAY_[1]} | sed -E ${RE_SUB_}`
+      STD_VSN_[3]=`echo ${VSN_ARRAY_[1]} | sed -E ${RE_SUB2_}`
+    else
+      STD_VSN_[3]=`echo ${VSN_ARRAY_[1]} | sed -E ${RE_SUB2_}`
     fi
-    STD_VSN_[3]=`echo ${VSN_ARRAY_[1]} | sed -E ${RE_SUB2_}`
   elif (( 1 == $VSN_ARRAY_LEN_ )); then
     # assuming 9 or 9-p123
     if [[ ${VSN_ARRAY_[0]} =~ ${RE_NUM_MATCH} ]]; then
       STD_VSN_[0]=${VSN_ARRAY_[0]}
     elif [[ ${VSN_ARRAY_[0]} =~ ${RE_SUB_MATCH} ]]; then
       STD_VSN_[0]=`echo ${VSN_ARRAY_[0]} | sed -E ${RE_SUB_}`
+      STD_VSN_[3]=`echo ${VSN_ARRAY_[1]} | sed -E ${RE_SUB2_}`
     else
       # no major version
       return 1
     fi
-    STD_VSN_[3]=`echo ${VSN_ARRAY_[0]} | sed -E ${RE_SUB2_}`
   else
     # unexpected format or empty string
     return 1
@@ -273,7 +283,7 @@ version_is_at_least() {
       if (( ${EXP_PATCH_} > ${ACT_PATCH_} )); then
         OK_=0
       elif (( ${EXP_PATCH_} == ${ACT_PATCH_} )); then
-        if (( ${EXP_QUAL_} > ${ACT_QUAL_} )); then
+        if [[ "${EXP_QUAL_}" > "${ACT_QUAL_}" ]]; then
           OK_=0
         fi
       fi
@@ -352,7 +362,7 @@ version_is_less_than() {
       if (( ${MAX_PATCH_} > ${ACT_PATCH_} )); then
         OK_=1
       elif (( ${MAX_PATCH_} == ${ACT_PATCH_} )); then
-        if (( ${MAX_QUAL_} > ${ACT_QUAL_} )); then
+        if [[ "${MAX_QUAL_}" > "${ACT_QUAL_}" ]]; then
           OK_=1
         fi
       fi

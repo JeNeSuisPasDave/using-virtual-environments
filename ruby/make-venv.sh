@@ -29,11 +29,51 @@ fi
 
 # Check the rbenv version
 #
-# TODO
+RBENV_VSN_EXP_="0.4.0"
+RBENV_VSN_MAX_="0.5.0"
+RBENV_VSN_=`rbenv -v`
+parse_version "${RBENV_VSN_}"
+if (( 0 != $? )); then
+  echo "ERROR: failed to parse RBENV_VSN_"
+  exit 2
+fi
+RBENV_VSN_PARTS_=( ${parse_version[@]} )
+RBENV_VSN_="${RBENV_VSN_PARTS_[0]}"
+RBENV_VSN_="${RBENV_VSN_}.${RBENV_VSN_PARTS_[1]}"
+RBENV_VSN_="${RBENV_VSN_}.${RBENV_VSN_PARTS_[2]}"
+RBENV_VSN_MIN_OK_=`version_is_at_least "${RBENV_VSN_EXP_}" "${RBENV_VSN_}"`
+RBENV_VSN_MAX_OK_=`version_is_less_than "${RBENV_VSN_MAX_}" "${RBENV_VSN_}"`
+if (( 0 == ${RBENV_VSN_MIN_OK_} )) \
+  || (( 0 == ${RBENV_VSN_MAX_OK_} )); then
+  echo
+  echo -n "ERROR: Expecting rbenv ${RBENV_VSN_EXP_} or later, "
+  echo "up to ${RBENV_VSN_MAX_}."
+  echo "Found ${RBENV_VSN_}"
+  echo
+  exit 10
+fi
 
 # Check the plugins
 #
-# TODO
+RBENV_REQUIRED_PLUGINS_=( "rbenv-gem-rehash" "rbenv-gemset" "ruby-build" )
+RBENV_PLUGINS_=( $HOME/.rbenv/plugins/* )
+for (( i = 0; i < ${#RBENV_REQUIRED_PLUGINS_[@]}; i++ ))
+do
+  FOUND_=0
+  for (( k = 0; k < ${#RBENV_PLUGINS_[@]}; k++ ))
+  do
+    PLUGIN_=`basename ${RBENV_PLUGINS_[k]}`
+    if [[ "${RBENV_REQUIRED_PLUGINS_[i]}" == "${PLUGIN_}" ]]; then
+      FOUND_=1
+      break
+    fi
+  done
+  if (( 0 == ${FOUND_} )); then
+    echo
+    echo "ERROR: Missing rbenv plugin ${RBENV_REQUIRED_PLUGINS_[i]}."
+    exit 8
+  fi
+done
 
 # Determine the version of Ruby we want
 #
@@ -122,21 +162,30 @@ fi
 
 # Set the gemset directory
 #
-# TODO
+rbenv local --unset
+if [[ ! -f ".rbenv-gemsets" ]]; then
+  echo ".gems" > .rbenv-gemsets
+  echo "" >> .rbenv-gemsets
+fi
 
-# RBLCL_DIRNAME_=.rblcl
-# SAVE_RBLCL_DIRNAME_=""
-# RUBY_VERSION_=2.0.0p481
-# RUBY_RBENV_VERSION_=2.0.0-p481
-# RBENV_VERSION_=0.4.0
-
-
-# Check which version of ruby is active, per rbenv
+# Install bundler
 #
-# RE_='s/^([^[:space:]]+).*$/\1/'
-# RBENV_ACTIVE_VERSION_=`rbenv version | sed -E ${RE_}`
-# if [[ "$RUBY_RBENV_VERSION_" != "$RBENV_ACTIVE_VERSION_" ]]; then
-#   echo "ERROR: rbenv has not activated Ruby version $RUBY_VERSION_."
-#   echo "Install using 'sudo port install rbenv'."
-#   exit 4
-# fi
+rbenv local ${RBENV_RUBY_VERSION_}
+BUNDLER_P_=`gem list --no-versions | grep -E ^bundler$`
+if [[ -z "${BUNDLER_P_}" ]]; then
+  gem install bundler
+fi
+BUNDLER_P_=`gem list --no-versions | grep -E ^bundler$`
+rbenv local --unset
+if [[ -z "${BUNDLER_P_}" ]]; then
+  echo "ERROR: failed to install the gem 'bundler'."
+  exit 6
+fi
+
+# Done!
+#
+echo ""
+echo "OK. Virtual environment for Ruby ${RUBY_VERSION_} is created."
+echo "Use the command 'rbenv local ${RBENV_RUBY_VERSION_}' to activate;"
+echo "Use command 'rbenv local --unset' to deactivate."
+echo ""
