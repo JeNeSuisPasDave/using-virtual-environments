@@ -41,8 +41,10 @@ RBENV_VSN_PARTS_=( ${parse_version[@]} )
 RBENV_VSN_="${RBENV_VSN_PARTS_[0]}"
 RBENV_VSN_="${RBENV_VSN_}.${RBENV_VSN_PARTS_[1]}"
 RBENV_VSN_="${RBENV_VSN_}.${RBENV_VSN_PARTS_[2]}"
-RBENV_VSN_MIN_OK_=`version_is_at_least "${RBENV_VSN_EXP_}" "${RBENV_VSN_}"`
-RBENV_VSN_MAX_OK_=`version_is_less_than "${RBENV_VSN_MAX_}" "${RBENV_VSN_}"`
+version_is_at_least "${RBENV_VSN_EXP_}" "${RBENV_VSN_}"
+RBENV_VSN_MIN_OK_=${version_is_at_least}
+version_is_less_than "${RBENV_VSN_MAX_}" "${RBENV_VSN_}"
+RBENV_VSN_MAX_OK_=${version_is_less_than}
 if (( 0 == ${RBENV_VSN_MIN_OK_} )) \
   || (( 0 == ${RBENV_VSN_MAX_OK_} )); then
   echo
@@ -74,6 +76,12 @@ do
     exit 8
   fi
 done
+
+# Unset the local rbenv ruby
+#
+if [[ -f "${SCRIPTDIR_}/.rbenv" ]]; then
+  rbenv local --unset
+fi
 
 # Determine the version of Ruby we want
 #

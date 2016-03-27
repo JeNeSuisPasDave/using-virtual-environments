@@ -1,8 +1,84 @@
+# is_this_gem_installed()
+#
+# Check if the Ruby gem is installed and its version is within
+# the expected range.
+#
+# Args:
+#   gem_name: the name of the gem (e.g. 'sass')
+#   vsn_expected: the expected version string (e.g. '0.11.3')
+#   vsn_max: the exclusive upper bound of the version range. The gem version
+#            must be less than this (and not equal to this).
+#
+# NOTE: Assumes global variable PKGS_ contains the list of gem packages
+#
+is_this_gem_installed() {
+  # Initial outcome is False
+  #
+  is_this_gem_installed=0
+
+  # Check args
+  #
+  if [[ 4 < $# ]]; then
+    echo "ERROR: too many arguments for 'is_this_gem_installed()'"
+    return 1
+  fi
+  if [ -z "$3" ]; then
+    echo "ERROR: missing max version string for 'is_this_gem_installed()'"
+    return 1
+  fi
+  if [ -z "$2" ]; then
+    echo "ERROR: missing expected version string for 'is_this_gem_installed()'"
+    return 1
+  fi
+  if [ -z "$1" ]; then
+    echo "ERROR: missing gem name string for 'is_this_gem_installed()'"
+    return 1
+  fi
+
+
+  local RE_VSN_='s/^.+\(([^\)]+)\)/\1/'
+  local INSTALLED_=`echo "${PKGS_}" | grep "^${1} (" | wc -l | tr -d [[:space:]]`
+  if [[ 0 -eq ${INSTALLED_} ]]; then
+    echo
+    echo "ERROR: ${1} is not installed"
+    echo
+    echo "Try 'gem install sass' to install ${1}, and"
+    echo "then try '${SCRIPTNAME_}' again."
+    echo
+    return 2
+  fi
+  local VSN_FULL_=`echo "${PKGS_}" | grep "^${1} (" | sed -E ${RE_VSN_}`
+  version_is_at_least "${2}" "${VSN_FULL_}"
+  local VSN_MIN_OK_=$version_is_at_least
+  version_is_less_than "${3}" "${VSN_FULL_}"
+  local VSN_MAX_OK_=$version_is_less_than
+  if (( 0 == ${VSN_MIN_OK_} )) \
+    || (( 0 == ${VSN_MAX_OK_} )); then
+    echo
+    echo -n "ERROR: Expecting ${1} ${VSN_EXP_} or later, "
+    echo "up to ${VSN_MAX_}."
+    echo "Found ${VSN_FULL_}"
+    echo
+    return 2
+  fi
+
+  # Get out
+  #
+  is_this_gem_installed=1
+  return 0
+}
+
 # is_this_ruby_active()
 #
 # Check if the Ruby version we want is active and local
 #
 is_this_ruby_active() {
+  # Initial outcome is False
+  #
+  is_this_ruby_active=0
+
+  # Check args
+  #
   if [[ 2 < $# ]]; then
     echo "ERROR: too many arguments for 'is_this_ruby_available()'"
     return 1
@@ -11,7 +87,6 @@ is_this_ruby_active() {
     echo "ERROR: missing version string for 'is_this_ruby_available()'"
     return 1
   fi
-  is_this_ruby_active=0
 
   # Parse the input version number
   #
@@ -58,6 +133,12 @@ is_this_ruby_active() {
 # Check if the Ruby version we want is available
 #
 is_this_ruby_available() {
+  # Initial outcome is False
+  #
+  is_this_ruby_available=0
+
+  # Check args
+  #
   if [[ 2 < $# ]]; then
     echo "ERROR: too many arguments for 'is_this_ruby_available()'"
     return 1
@@ -66,7 +147,6 @@ is_this_ruby_available() {
     echo "ERROR: missing version string for 'is_this_ruby_available()'"
     return 1
   fi
-  is_this_ruby_available=0
 
   # Parse the input version number
   #
@@ -107,6 +187,14 @@ is_this_ruby_available() {
 # (like 'p123' or 'a1' or 'rc1' or 'pre').
 #
 parse_version() {
+  # Initialize result and local variables
+  #
+  local STD_VSN_=( "0" "0" "0" "" )
+  local IFS_SAVE_="${IFS}"
+  parse_version=( ${STD_VSN_[@]} )
+
+  # Check args
+  #
   if [[ 2 < $# ]]; then
     echo "ERROR: too many arguments for 'parse_version()'."
     return 1
@@ -116,17 +204,13 @@ parse_version() {
     return 1
   fi
 
-  # Initialize result and local variables
-  #
-  local STD_VSN_=( "0" "0" "0" "" )
-  local IFS_SAVE_="${IFS}"
-  parse_version=( ${STD_VSN_[@]} )
-
   # Strip any leading substring from the version string (e.g., for
   # "rbenv 0.4.0" strip the leading "rbenv ")
   #
-  RE_LEADTOKEN_='s/^[^[:digit:]][^[:space:]]*[[:space:]](.+)$/\1/'
-  STRIPPED_VSN_=`echo "$1" | sed -E ${RE_LEADTOKEN_}`
+  local RE_LEADTOKEN_='s/^[^[:digit:]][^[:space:]]*[[:space:]](.+)$/\1/'
+  local STRIPPED_VSN_=`echo "$1" | sed -E ${RE_LEADTOKEN_}`
+  local RE_TAIL_='s/^([^[:space:]]+)[[:space:]]?.*$/\1/'
+  local STRIPPED_VSN_=`echo "${STRIPPED_VSN_}" | sed -E ${RE_TAIL_}`
 
   # Split the version into tokens
   #
@@ -200,7 +284,7 @@ parse_version() {
       STD_VSN_[0]=${VSN_ARRAY_[0]}
     elif [[ ${VSN_ARRAY_[0]} =~ ${RE_SUB_MATCH} ]]; then
       STD_VSN_[0]=`echo ${VSN_ARRAY_[0]} | sed -E ${RE_SUB_}`
-      STD_VSN_[3]=`echo ${VSN_ARRAY_[1]} | sed -E ${RE_SUB2_}`
+      STD_VSN_[3]=`echo ${VSN_ARRAY_[0]} | sed -E ${RE_SUB2_}`
     else
       # no major version
       return 1
@@ -226,6 +310,10 @@ parse_version() {
 # Second argument is the string containing a version number.
 #
 version_is_at_least() {
+  # Initial outcome is False
+  #
+  version_is_at_least=0
+
   # Make sure an expected version string got passed
   #
   if [ -z "$1" ]; then
@@ -292,7 +380,7 @@ version_is_at_least() {
 
   # Get out
   #
-  echo ${OK_}
+  version_is_at_least=${OK_}
   return 0
 }
 
@@ -305,6 +393,10 @@ version_is_at_least() {
 # Second argument is the string containing a version number to test.
 #
 version_is_less_than() {
+  # Initial outcome is False
+  #
+  version_is_less_than=0
+
   # Make sure an maximum version string got passed
   #
   if [ -z "$1" ]; then
@@ -371,6 +463,6 @@ version_is_less_than() {
 
   # Get out
   #
-  echo ${OK_}
+  version_is_less_than=${OK_}
   return 0
 }

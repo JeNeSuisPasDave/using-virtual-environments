@@ -2,43 +2,147 @@
 # source check-functions.src
 #
 
-VENV_DIRNAME_=venv27
-PYTHON_EXP_VSN_=2.7
-PYTHON_MAX_VSN_=2.8
-
-# Check whether we are running in a python virtual environment
+#NOTE: expecting these globals to be set:
 #
-VENV_RUNNING_=`env | grep VIRTUAL_ENV | wc -l | tr -d [[:space:]]`
-if [ 0 == ${VENV_RUNNING_} ]; then
-  echo
-  echo "ERROR: Python virtual environment not running"
-  echo
-  echo "Try '. ${VENV_DIRNAME_}/bin/activate' to start the virtual environment,"
-  echo "and then try '${SCRIPTNAME_}' again."
-  echo
+# SCRIPTDIR_
+# SCRIPTNAME_
+# RUBY_VSN_
+# RUBY_VSN_EXP_
+# RUBY_VSN_MAX_
+# RBENV_RUBY_VSN_EXP_
+# RBENV_RUBY_VSN_MAX_
+#
+
+# Check whether rbenv is installed
+#
+`which -s rbenv`
+RBENV_IN_PATH_=$?
+if (( 0 != RBENV_IN_PATH_ )); then
+  echo "ERROR: rbenv is not installed."
+  echo "Install using 'sudo port install rbenv'."
   exit 2
 fi
 
-# Check whether we are running Python 2.7
+# Check the rbenv version
 #
-PYTHON_DOWNLOAD_LOC_="https://www.python.org/"
-PYTHON_FULL_VSN_=`python --version  2>&1 | grep "Python [0-9]"`
-if [ -z "${PYTHON_FULL_VSN_}" ]; then
-  echo
-  echo "ERROR: Python is not installed or not in the path."
-  echo
-  echo "Install Python; perhaps from ${PYTHON_DOWNLOAD_LOC_}"
-  echo
-  exit 4
+RBENV_VSN_EXP_="0.4.0"
+RBENV_VSN_MAX_="0.5.0"
+RBENV_VSN_=`rbenv -v`
+parse_version "${RBENV_VSN_}"
+if (( 0 != $? )); then
+  echo "ERROR: failed to parse RBENV_VSN_"
+  exit 2
 fi
-PYTHON_VSN_MIN_OK_=`version_is_at_least "${PYTHON_EXP_VSN_}" "${PYTHON_FULL_VSN_}"`
-PYTHON_VSN_MAX_OK_=`version_is_less_than "${PYTHON_MAX_VSN_}" "${PYTHON_FULL_VSN_}"`
-if (( 0 == ${PYTHON_VSN_MIN_OK_} )) \
-  || (( 0 == ${PYTHON_VSN_MAX_OK_} )); then
+RBENV_VSN_PARTS_=( ${parse_version[@]} )
+RBENV_VSN_="${RBENV_VSN_PARTS_[0]}"
+RBENV_VSN_="${RBENV_VSN_}.${RBENV_VSN_PARTS_[1]}"
+RBENV_VSN_="${RBENV_VSN_}.${RBENV_VSN_PARTS_[2]}"
+version_is_at_least "${RBENV_VSN_EXP_}" "${RBENV_VSN_}"
+RBENV_VSN_MIN_OK_=$version_is_at_least
+version_is_less_than "${RBENV_VSN_MAX_}" "${RBENV_VSN_}"
+RBENV_VSN_MAX_OK_=$version_is_less_than
+if (( 0 == ${RBENV_VSN_MIN_OK_} )) \
+  || (( 0 == ${RBENV_VSN_MAX_OK_} )); then
   echo
-  echo -n "ERROR: Expecting Python ${PYTHON_EXP_VSN_} or later, "
-  echo "up to ${PYTHON_MAX_VSN_}."
-  echo "Found ${PYTHON_FULL_VSN_}"
+  echo -n "ERROR: Expecting rbenv ${RBENV_VSN_EXP_} or later, "
+  echo "up to ${RBENV_VSN_MAX_}."
+  echo "Found ${RBENV_VSN_}"
   echo
+  exit 10
+fi
+
+# Check the plugins
+#
+RBENV_REQUIRED_PLUGINS_=( "rbenv-gem-rehash" "rbenv-gemset" "ruby-build" )
+RBENV_PLUGINS_=( $HOME/.rbenv/plugins/* )
+for (( i = 0; i < ${#RBENV_REQUIRED_PLUGINS_[@]}; i++ ))
+do
+  FOUND_=0
+  for (( k = 0; k < ${#RBENV_PLUGINS_[@]}; k++ ))
+  do
+    PLUGIN_=`basename ${RBENV_PLUGINS_[k]}`
+    if [[ "${RBENV_REQUIRED_PLUGINS_[i]}" == "${PLUGIN_}" ]]; then
+      FOUND_=1
+      break
+    fi
+  done
+  if (( 0 == ${FOUND_} )); then
+    echo
+    echo "ERROR: Missing rbenv plugin ${RBENV_REQUIRED_PLUGINS_[i]}."
+    exit 8
+  fi
+done
+
+# Is a local rbenv ruby active?
+#
+if [[ ! -f ".ruby-version" ]]; then
+  echo "ERROR: local ruby is not active."
+  echo "Activate using 'rbenv local ${RBENV_RUBY_VSN_EXP_}'."
+  echo "Then rerun '(basename ${SCRIPTNAME_})'."
+  exit 2
+fi
+
+# Check the bundler gem
+#
+BUNDLER_P_=`gem list --no-versions | grep -E ^bundler$`
+if [[ -z "${BUNDLER_P_}" ]]; then
+  echo "ERROR: the gem 'bundler' is not installed."
+  echo "Run the make-venv.sh script to establish the Ruby virtual environment."
   exit 6
+fi
+
+# Check that the active rbenv local ruby is an expected version
+#
+RBENV_RUBY_VSN_ACT_=`rbenv version-name`
+parse_version "${RBENV_RUBY_VSN_ACT_}"
+if (( 0 != $? )); then
+  echo "ERROR: failed to parse RBENV_RUBY_VSN_ACT_"
+  exit 2
+fi
+RBENV_RUBY_VSN_PARTS_=( ${parse_version[@]} )
+RBENV_RUBY_VSN_="${RBENV_RUBY_VSN_PARTS_[0]}.${RBENV_RUBY_VSN_PARTS_[1]}"
+RBENV_RUBY_VSN_="${RBENV_RUBY_VSN_}.${RBENV_RUBY_VSN_PARTS_[2]}"
+if [[ ! -z "${RBENV_RUBY_VSN_PARTS_[3]}" ]]; then
+  RBENV_RUBY_VSN_="${RBENV_RUBY_VSN_}-${RBENV_RUBY_VSN_PARTS_[3]}"
+fi
+version_is_at_least "${RBENV_RUBY_VSN_EXP_}" "${RBENV_RUBY_VSN_}"
+RBENV_RUBY_VSN_MIN_OK_=${version_is_at_least}
+version_is_less_than "${RBENV_RUBY_VSN_MAX_}" "${RBENV_RUBY_VSN_}"
+RBENV_RUBY_VSN_MAX_OK_=${version_is_less_than}
+if (( 0 == ${RBENV_RUBY_VSN_MIN_OK_} )) \
+  || (( 0 == ${RBENV_RUBY_VSN_MAX_OK_} )); then
+  echo
+  echo -n "ERROR: Expecting rbenv local ruby ${RBENV_RUBY_VSN_EXP_} or later, "
+  echo "up to ${RBENV_RUBY_VSN_MAX_}."
+  echo "Found ${RBENV_RUBY_VSN_}"
+  echo
+  exit 10
+fi
+
+# Check that ruby itself is the expected version
+#
+RUBY_VSN_ACT_=`ruby -v`
+parse_version "${RUBY_VSN_ACT_}"
+if (( 0 != $? )); then
+  echo "ERROR: failed to parse RUBY_VSN_ACT_"
+  exit 2
+fi
+RUBY_VSN_PARTS_=( ${parse_version[@]} )
+RUBY_VSN_="${RUBY_VSN_PARTS_[0]}.${RUBY_VSN_PARTS_[1]}"
+RUBY_VSN_="${RUBY_VSN_}.${RUBY_VSN_PARTS_[2]}"
+if [[ ! -z "${RUBY_VSN_PARTS_[3]}" ]]; then
+  RUBY_VSN_="${RUBY_VSN_}${RUBY_VSN_PARTS_[3]}"
+fi
+version_is_at_least "${RUBY_VSN_EXP_}" "${RUBY_VSN_}"
+RUBY_VSN_MIN_OK_=${version_is_at_least}
+version_is_less_than "${RUBY_VSN_MAX_}" "${RUBY_VSN_}"
+RUBY_VSN_MAX_OK_=${version_is_less_than}
+if (( 0 == ${RUBY_VSN_MIN_OK_} )) \
+  || (( 0 == ${RUBY_VSN_MAX_OK_} )); then
+  echo
+  echo -n "ERROR: Expecting ruby ${RUBY_VSN_EXP_} or later, "
+  echo "up to ${RUBY_VSN_MAX_}."
+  echo "Found ${RUBY_VSN_}"
+  echo
+  exit 10
 fi
