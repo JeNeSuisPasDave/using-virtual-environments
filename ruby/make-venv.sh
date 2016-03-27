@@ -1,8 +1,6 @@
 #! /bin/bash
 #
-# This script assumes that Ruby 2.0.0p481 is installed via rbenv.
-# If Ruby 2.0.0p481 is installed some other way, then the script will
-# need some adjustment.
+# This script assumes that rbenv 0.4.0 is installed.
 #
 
 SCRIPTNAME_="$0"
