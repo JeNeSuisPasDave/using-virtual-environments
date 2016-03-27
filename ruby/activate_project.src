@@ -1,0 +1,49 @@
+# Switch to project-specific environments for ruby
+#
+# Want to put '(rb)' after the git branch in the command prompt.
+#
+# Note: My PS1 looks like this:
+#
+#  PS1=\[\033[1;36m\]$(parse_git_branch)\[\033[1;32m\]\w$\[\033[0m\]\n
+#
+
+# Save PS1
+#
+#\[\033[1;36m\]$(parse_git_branch)\[\033[1;32m\]\w$\[\033[0m\]\n
+#
+RE_='s/^(.*)(\\\[\\033\[1;32m\\\]\\w\$.+)$/\1/'
+export PRE_PS1_=`echo -n "$PS1" | sed -E ${RE_}`
+RE_='s/^(.*)(\\\[\\033\[1;32m\\\]\\w\$.+)$/\2/'
+export POST_PS1_=`echo -n "$PS1" | sed -E ${RE_}`
+CUR_PS1_=""
+
+# Switch to ruby 2.0.0p598
+#
+rbenv local 2.0.0-p598
+CUR_PS1_="(rb)$CUR_PS1_"
+export PS1="${PRE_PS1_}${CUR_PS1_}${POST_PS1_}"
+
+# A bit of cleanup
+#
+unset CUR_PS1_
+unset RE_
+
+# Prepare the script to restore default environments
+#
+PROJECT_ROOT_=`pwd`
+# echo "deactivate" > deactivate_project.src
+echo "rbenv local --unset" >> deactivate_project.src
+echo "export PS1=\"\${PRE_PS1_}\${POST_PS1_}\"" >> deactivate_project.src
+echo "unset PRE_PS1_" >> deactivate_project.src
+echo "unset POST_PS1_" >> deactivate_project.src
+echo "rm deactivate_project.src" >> deactivate_project.src
+echo "unalias deactivate_project" >> deactivate_project.src
+
+# Setup the alias to deactivate the local environments
+#
+alias deactivate_project='. '$PROJECT_ROOT_'/deactivate_project.src'
+unset PROJECT_ROOT_
+
+# Inform user of how to get default environment back
+#
+echo "Run 'deactivate_project' to restore default Ruby environment"
