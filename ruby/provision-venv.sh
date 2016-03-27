@@ -11,11 +11,11 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 
 # Ruby and rbenv local Ruby versions
 #
-RUBY_VSN_="2.0.0p598"
-RUBY_VSN_EXP_="2.0.0p598"
-RUBY_VSN_MAX_="2.0.1"
-RBENV_RUBY_VSN_EXP_="2.0.0-p598"
-RBENV_RUBY_VSN_MAX_="2.0.1"
+RUBY_VSN_="2.2.3"
+RUBY_VSN_EXP_="2.2.3"
+RUBY_VSN_MAX_="2.2.4"
+RBENV_RUBY_VSN_EXP_="2.2.3"
+RBENV_RUBY_VSN_MAX_="2.2.4"
 
 # Pick up the verification functions
 #

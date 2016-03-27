@@ -2,14 +2,24 @@
 # source check-functions.src
 #
 
-SASS_VSN_EXP_=3.1.3
-SASS_VSN_MAX_=3.1.4
-CHUNKY_PNG_VSN_EXP_=1.2.0
-CHUNKY_PNG_VSN_MAX_=1.2.1
-FSSM_VSN_EXP_=0.2.7
-FSSM_VSN_MAX_=0.2.8
-COMPASS_VSN_EXP_=0.11.3
-COMPASS_VSN_MAX_=0.11.4
+SASS_VSN_EXP_=3.4.21
+SASS_VSN_MAX_=3.5.0
+FFI_VSN_EXP_=1.9.10
+FFI_VSN_MAX_=1.9.11
+RB_INOTIFY_VSN_EXP_=0.9.7
+RB_INOTIFY_VSN_MAX_=0.9.8
+RB_FSEVENT_VSN_EXP_=0.9.7
+RB_FSEVENT_VSN_MAX_=0.9.8
+COMPASS_IMPORT_ONCE_VSN_EXP_=1.0.5
+COMPASS_IMPORT_ONCE_VSN_MAX_=1.0.6
+MULTI_JSON_VSN_EXP_=1.11.2
+MULTI_JSON_VSN_MAX_=1.11.3
+COMPASS_CORE_VSN_EXP_=1.0.3
+COMPASS_CORE_VSN_MAX_=1.0.4
+CHUNKY_PNG_VSN_EXP_=1.3.5
+CHUNKY_PNG_VSN_MAX_=1.3.6
+COMPASS_VSN_EXP_=1.0.3
+COMPASS_VSN_MAX_=1.1.0
 
 # Capture pip packages
 #
@@ -22,16 +32,51 @@ if (( 0 == $is_this_gem_installed )); then
   exit 8
 fi
 
-# Check whether chunky_png installed
+# Check whether ffi installed
 #
-is_this_gem_installed "chunky_png" "${CHUNKY_PNG_VSN_EXP_}" "${CHUNKY_PNG_VSN_MAX_}"
+is_this_gem_installed "ffi" "${FFI_VSN_EXP_}" "${FFI_VSN_MAX_}"
 if (( 0 == $is_this_gem_installed )); then
   exit 8
 fi
 
-# Check whether fssm installed
+# Check whether rb-inotify installed
 #
-is_this_gem_installed "fssm" "${FSSM_VSN_EXP_}" "${FSSM_VSN_MAX_}"
+is_this_gem_installed "rb-inotify" "${RB_INOTIFY_VSN_EXP_}" "${RB_INOTIFY_VSN_MAX_}"
+if (( 0 == $is_this_gem_installed )); then
+  exit 8
+fi
+
+# Check whether rb-fsevent installed
+#
+is_this_gem_installed "rb-fsevent" "${RB_FSEVENT_VSN_EXP_}" "${RB_FSEVENT_VSN_MAX_}"
+if (( 0 == $is_this_gem_installed )); then
+  exit 8
+fi
+
+# Check whether ffi installed
+#
+is_this_gem_installed "compass-import-once" "${COMPASS_IMPORT_ONCE_VSN_EXP_}" "${COMPASS_IMPORT_ONCE_VSN_MAX_}"
+if (( 0 == $is_this_gem_installed )); then
+  exit 8
+fi
+
+# Check whether multi_json installed
+#
+is_this_gem_installed "multi_json" "${MULTI_JSON_VSN_EXP_}" "${MULTI_JSON_VSN_MAX_}"
+if (( 0 == $is_this_gem_installed )); then
+  exit 8
+fi
+
+# Check whether compass-core installed
+#
+is_this_gem_installed "compass-core" "${COMPASS_CORE_VSN_EXP_}" "${COMPASS_CORE_VSN_MAX_}"
+if (( 0 == $is_this_gem_installed )); then
+  exit 8
+fi
+
+# Check whether chunky_png installed
+#
+is_this_gem_installed "chunky_png" "${CHUNKY_PNG_VSN_EXP_}" "${CHUNKY_PNG_VSN_MAX_}"
 if (( 0 == $is_this_gem_installed )); then
   exit 8
 fi

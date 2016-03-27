@@ -17,9 +17,9 @@ RE_='s/^(.*)(\\\[\\033\[1;32m\\\]\\w\$.+)$/\2/'
 export POST_PS1_=`echo -n "$PS1" | sed -E ${RE_}`
 CUR_PS1_=""
 
-# Switch to ruby 2.0.0p598
+# Switch to ruby 2.2.3
 #
-rbenv local 2.0.0-p598
+rbenv local 2.2.3
 CUR_PS1_="(rb)$CUR_PS1_"
 export PS1="${PRE_PS1_}${CUR_PS1_}${POST_PS1_}"
 

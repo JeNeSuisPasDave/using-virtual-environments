@@ -83,7 +83,7 @@ fi
 
 # Determine the version of Ruby we want
 #
-RUBY_VERSION_="2.0.0p598"
+RUBY_VERSION_="2.2.3"
 parse_version "${RUBY_VERSION_}"
 if (( 0 != $? )); then
   echo "ERROR: failed to parse RUBY_VERSION_"
