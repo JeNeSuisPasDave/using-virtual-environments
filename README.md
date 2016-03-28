@@ -15,9 +15,9 @@ Examples are primarily developed on OS X, but where possible examples are also p
 * [Using Virtual Environments - Python I][https://www.develves.net/blogs/asd/2016-02-11-using-virtual-environments-python-1/]
 * [Using Virtual Environments - Python II][https://www.develves.net/blogs/asd/2016-02-18-using-virtual-environments-python-2/]
 * [Using Virtual Environments - Ruby I][https://www.develves.net/blogs/asd/2016-03-17-using-virtual-environments-ruby-1/]
-* [Using Virtual Environments - Ruby II][https://www.develves.net/blogs/asd/2016-03-31-using-virtual-environments-ruby-2/]
+* Using Virtual Environments - Ruby II _(coming soon)_
 
-_Note: Posts on Ruby and Node.js are forthcoming._
+_Note: Posts on Node.js and Go are forthcoming._
 
 ## Branches
 
@@ -29,5 +29,5 @@ _Note: Posts on Ruby and Node.js are forthcoming._
 
 * **example-ruby200** demonstrates script for creating, provisioning (with dependency management) and upgrading a Ruby 2.0.0 virtual environment.
 
-* **example-ruby22** demonstrates script for creating, provisioning (with dependency management) and upgrading a Ruby 2.2 virtual environment.
+* **example-ruby223** demonstrates script for creating, provisioning (with dependency management) and upgrading a Ruby 2.2.3 virtual environment.
 
