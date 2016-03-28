@@ -11,10 +11,10 @@ Examples are primarily developed on OS X, but where possible examples are also p
 
 ## Posts
 
-* [Package Managers and Virtual Environments][https://www.develves.net/blogs/asd/2016-02-04-virtual-environments/]
-* [Using Virtual Environments - Python I][https://www.develves.net/blogs/asd/2016-02-11-using-virtual-environments-python-1/]
-* [Using Virtual Environments - Python II][https://www.develves.net/blogs/asd/2016-02-18-using-virtual-environments-python-2/]
-* [Using Virtual Environments - Ruby I][https://www.develves.net/blogs/asd/2016-03-17-using-virtual-environments-ruby-1/]
+* [Package Managers and Virtual Environments](https://www.develves.net/blogs/asd/2016-02-04-virtual-environments/)
+* [Using Virtual Environments - Python I](https://www.develves.net/blogs/asd/2016-02-11-using-virtual-environments-python-1/)
+* [Using Virtual Environments - Python II](https://www.develves.net/blogs/asd/2016-02-18-using-virtual-environments-python-2/)
+* [Using Virtual Environments - Ruby I](https://www.develves.net/blogs/asd/2016-03-17-using-virtual-environments-ruby-1/)
 * Using Virtual Environments - Ruby II _(coming soon)_
 
 _Note: Posts on Node.js and Go are forthcoming._
