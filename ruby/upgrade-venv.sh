@@ -34,6 +34,7 @@ RBENV_RUBY_VSN_MAX_="2.0.1"
 # Upgrade the required packages
 #
 bundle update
+gem cleanup
 
 # Check that we still have the needed packages
 #

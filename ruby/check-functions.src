@@ -80,11 +80,11 @@ is_this_ruby_active() {
   # Check args
   #
   if [[ 2 < $# ]]; then
-    echo "ERROR: too many arguments for 'is_this_ruby_available()'"
+    echo "ERROR: too many arguments for 'is_this_ruby_active()'"
     return 1
   fi
   if [ -z "$1" ]; then
-    echo "ERROR: missing version string for 'is_this_ruby_available()'"
+    echo "ERROR: missing version string for 'is_this_ruby_active()'"
     return 1
   fi
 
