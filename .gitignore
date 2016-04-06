@@ -16,6 +16,9 @@ __py_cache__
 /Gemfile
 /Gemfile.lock
 ruby/deactivate-project.ps1
+.gems/
+.rbenv-gemsets
+
 
 # Sublime Text
 #

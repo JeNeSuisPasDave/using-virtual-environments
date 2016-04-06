@@ -27,8 +27,8 @@ fi
 
 # Check the rbenv version
 #
-RBENV_VSN_EXP_="0.4.0"
-RBENV_VSN_MAX_="0.5.0"
+RBENV_VSN_EXP_="1.0.0"
+RBENV_VSN_MAX_="1.1.0"
 RBENV_VSN_=`rbenv -v`
 parse_version "${RBENV_VSN_}"
 if (( 0 != $? )); then
@@ -55,7 +55,7 @@ fi
 
 # Check the plugins
 #
-RBENV_REQUIRED_PLUGINS_=( "rbenv-gem-rehash" "rbenv-gemset" "ruby-build" )
+RBENV_REQUIRED_PLUGINS_=( "rbenv-gemset" "ruby-build" )
 RBENV_PLUGINS_=( $HOME/.rbenv/plugins/* )
 for (( i = 0; i < ${#RBENV_REQUIRED_PLUGINS_[@]}; i++ ))
 do
@@ -192,6 +192,10 @@ fi
 #
 echo ""
 echo "OK. Virtual environment for Ruby ${RUBY_VERSION_} is created."
-echo "Use the command 'rbenv local ${RBENV_RUBY_VERSION_}' to activate;"
-echo "Use command 'rbenv local --unset' to deactivate."
+echo ""
+echo -n "To activate, use the source command "
+echo "'. ${SCRIPTDIR_}/activate_project.src'."
+echo ""
+echo "Alternatively, use the command 'rbenv local ${RBENV_RUBY_VERSION_}' "
+echo "to activate, and the command 'rbenv local --unset' to deactivate."
 echo ""
