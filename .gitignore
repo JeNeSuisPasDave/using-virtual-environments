@@ -12,6 +12,10 @@ __py_cache__
 # Ruby and rbenv extras
 #
 .ruby-version
+.rblcl
+/Gemfile
+/Gemfile.lock
+ruby/deactivate-project.ps1
 
 # Sublime Text
 #
