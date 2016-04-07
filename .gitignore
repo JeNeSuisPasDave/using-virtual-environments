@@ -9,6 +9,17 @@ venv3*/
 __py_cache__
 *.pyc
 
+# Ruby and rbenv extras
+#
+.ruby-version
+.rblcl
+/Gemfile
+/Gemfile.lock
+ruby/deactivate-project.ps1
+.gems/
+.rbenv-gemsets
+
+
 # Sublime Text
 #
 *.sublime-workspace
