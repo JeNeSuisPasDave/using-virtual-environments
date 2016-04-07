@@ -5,7 +5,7 @@
 			"name": "Using Virtual Environments",
 			"path": ".",
 			"folder_exclude_patterns": [
-				"__pycache__", 
+				"__pycache__", ".rblcl",
 				"venv2*", "venv3*",
 				".git"]
 		}
