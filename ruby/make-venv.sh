@@ -27,8 +27,8 @@ fi
 
 # Check the rbenv version
 #
-RBENV_VSN_EXP_="0.4.0"
-RBENV_VSN_MAX_="0.5.0"
+RBENV_VSN_EXP_="1.0.0"
+RBENV_VSN_MAX_="1.1.0"
 RBENV_VSN_=`rbenv -v`
 parse_version "${RBENV_VSN_}"
 if (( 0 != $? )); then
