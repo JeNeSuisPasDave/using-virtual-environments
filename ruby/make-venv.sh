@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# This script assumes that rbenv 0.4.0 is installed.
+# This script assumes that rbenv 1.0.0 is installed.
 #
 
 SCRIPTNAME_="$0"
