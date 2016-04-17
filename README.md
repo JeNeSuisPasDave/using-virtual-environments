@@ -33,3 +33,5 @@ _Note: Posts on Node.js and Go are forthcoming._
 * **example-ruby223** demonstrates script for creating, provisioning (with dependency management) and upgrading a Ruby 2.2.3 virtual environment.
 
 * **example-node012** demonstrates script for creating, provisioning (with dependency management) and upgrading a Node.js 0.12.13 virtual environment.
+
+* **example-node44** demonstrates script for creating, provisioning (with dependency management) and upgrading a Node.js 4.4.2 virtual environment.
