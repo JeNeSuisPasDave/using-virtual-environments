@@ -1,0 +1,138 @@
+# NOTE: expect that this is preceded by:
+# source check-functions.src
+#
+
+#NOTE: expecting these globals to be set:
+#
+# SCRIPTDIR_
+# SCRIPTNAME_
+# NODEJS_LCL_
+# NODEJS_VSN_
+# NODE_VSN_EXP_
+# NODE_VSN_MAX_
+# NPM_VSN_EXP_
+# NPM_VSN_MAX_
+#
+
+# function is_venv_node_active()
+#
+# Checks whether the local Node.js virtual environment is active
+#
+# Exit code is 0 if the virtual environment is active.
+#
+is_venv_node_active() {
+  `which -s node`
+  local NODE_IN_PATH_=$?
+  if (( 0 != NODE_IN_PATH_ )); then
+    echo "ERROR: The Node.js virtual environment is not active." > /dev/stderr
+    echo "" > /dev/stderr
+    return 1
+  else
+    local NODEJS_BIN_EXP_=`pwd`\/${NODEJS_LCL_}\/${NODEJS_VSN_}\/bin
+    local NODE_PATH_=`which node`
+    local NODEJS_BIN_ACT_=`dirname ${NODE_PATH_}`
+    if [[ "${NODEJS_BIN_EXP_}" != "${NODEJS_BIN_ACT_}" ]]; then
+      echo "ERROR: The Node.js virtual environment is not active." > /dev/stderr
+      echo "" > /dev/stderr
+      return 1
+    fi
+  fi
+
+  # Get out
+  #
+  return 0
+}
+
+# function is_node_version_correct()
+#
+# Checks whether the version of node is correct.
+#
+# Exit code is 0 if the node version is correct.
+#
+is_node_version_correct() {
+  local NODE_VSN_ACT_=`node -v`
+  parse_version "${NODE_VSN_ACT_}"
+  if (( 0 != $? )); then
+    echo "ERROR: failed to parse node version" > /dev/stderr
+    echo "" > /dev/stderr
+    return 1
+  else
+    NODE_VSN_ACT_="${parse_version[0]}.${parse_version[1]}"
+    NODE_VSN_ACT_="${NODE_VSN_ACT_}.${parse_version[2]}"
+    version_is_at_least "${NODE_VSN_EXP_}" "${NODE_VSN_ACT_}"
+    local NODE_VSN_MIN_OK_=$version_is_at_least
+    version_is_less_than "${NODE_VSN_MAX_}" "${NODE_VSN_ACT_}"
+    local NODE_VSN_MAX_OK_=$version_is_less_than
+    if (( 0 == ${NODE_VSN_MIN_OK_} )) \
+      || (( 0 == ${NODE_VSN_MAX_OK_} )); then
+      echo
+      echo -n "ERROR: Expecting node ${NODE_VSN_EXP_} or later, " > /dev/stderr
+      echo "up to ${NODE_VSN_MAX_}." > /dev/stderr
+      echo "Found ${NODE_VSN_ACT_}" > /dev/stderr
+      echo "" > /dev/stderr
+      return 1
+    fi
+  fi
+
+  # Get out
+  #
+  return 0
+}
+
+# function is_npm_version_correct()
+#
+# Checks whether the version of npm is correct.
+#
+# Exit code is 0 if the npm version is correct.
+#
+is_npm_version_correct() {
+  local NPM_VSN_ACT_=`npm -v`
+  parse_version "${NPM_VSN_ACT_}"
+  if (( 0 != $? )); then
+    echo "ERROR: failed to parse npm version" > /dev/stderr
+    echo "" > /dev/stderr
+    return 1
+  else
+    NPM_VSN_ACT_="${parse_version[0]}.${parse_version[1]}"
+    NPM_VSN_ACT_="${NPM_VSN_ACT_}.${parse_version[2]}"
+    version_is_at_least "${NPM_VSN_EXP_}" "${NPM_VSN_ACT_}"
+    local NPM_VSN_MIN_OK_=$version_is_at_least
+    version_is_less_than "${NPM_VSN_MAX_}" "${NPM_VSN_ACT_}"
+    local NPM_VSN_MAX_OK_=$version_is_less_than
+    if (( 0 == ${NPM_VSN_MIN_OK_} )) \
+      || (( 0 == ${NPM_VSN_MAX_OK_} )); then
+      echo
+      echo -n "ERROR: Expecting npm ${NPM_VSN_EXP_} or later, " > /dev/stderr
+      echo "up to ${NPM_VSN_MAX_}." > /dev/stderr
+      echo "Found ${NPM_VSN_ACT_}" > /dev/stderr
+      echo "" > /dev/stderr
+      return 1
+    fi
+  fi
+
+  # Get out
+  #
+  return 0
+}
+
+# Check whether the Node.js virtual enviornment is active
+#
+is_venv_node_active
+if (( 0 != $? )); then
+  exit 2
+fi
+
+# Check that the node version is correct
+#
+is_node_version_correct
+if (( 0 != $? )); then
+  exit 4
+fi
+
+# Check that the npm version is correct
+#
+is_npm_version_correct
+if (( 0 != $? )); then
+  exit 6
+fi
+
