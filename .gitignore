@@ -19,6 +19,12 @@ ruby/deactivate-project.ps1
 .gems/
 .rbenv-gemsets
 
+# Node.js
+#
+.jslcl
+nodejs/deactivate-venv.src
+nodejs/deactivate-venv.ps1
+node_modules/
 
 # Sublime Text
 #
