@@ -1,0 +1,79 @@
+#! /bin/bash
+#
+
+SCRIPTNAME_="$0"
+
+# Get the directory holding this script
+# (method from: http://stackoverflow.com/a/12694189/1392864)
+#
+SCRIPTDIR_="${BASH_SOURCE%/*}"
+if [[ ! -d "$SCRIPTDIR_" ]]; then
+  SCRIPTDIR_="$PWD"
+fi
+
+# Pick up the activation functions
+#
+. "${SCRIPTDIR_}/activation-functions.src"
+
+# Activate the local Node.js deployment
+#
+NODEJS_VSN_="0.12.13"
+NODEJS_LCL_=".jslcl"
+activate_nodejs "${NODEJS_LCL_}/${NODEJS_VSN_}"
+if (( 0 != $? )); then
+  echo "ERROR: failed to activate Node.js"
+  unset NODEJS_VSN_
+  unset NODEJS_LCL_
+  return 2
+fi
+unset NODEJS_VSN_
+unset NODEJS_LCL_
+if (( 0 == ${activate_nodejs[0]} )); then
+  echo "WARNING: The Node.js virtual environment is already activated."
+  echo "         You should be able to deactivate the Node.js virtual"
+  echo "         environment it with the command 'deactivate-venv'."
+  echo ""
+else
+  # Set the PATH and prompt
+  #
+  export PATH="${activate_nodejs[2]}"
+  export PS1="${activate_nodejs[3]}"
+
+  # Create the deactivation script
+  #
+  ABS_SCRIPTDIR_=`abspath "${SCRIPTDIR_}"`
+  FN_="deactivate-venv.src"
+  pushd "${SCRIPTDIR_}" > /dev/null
+  echo ". \"${ABS_SCRIPTDIR_}/activation-functions.src\"" > $FN_
+  echo "deactivate_nodejs \"${activate_nodejs[1]}\"" >> $FN_
+  echo "if (( 0 != \$? )); then" >> $FN_
+  echo -n "  echo \"ERROR: failed to deactivate the " >> $FN_
+  echo "Node.js virtual environment\"" >> $FN_
+  echo "  exit 2" >> $FN_
+  echo "fi" >> $FN_
+  echo "if (( 0 == \${deactivate_nodejs[0]} )); then" >> $FN_
+  echo -n "  echo \"WARNING: The Node.js virtual environment is " >> $FN_
+  echo "already deactivated.\"" >> $FN_
+  echo "  echo \"\"" >> $FN_
+  echo "else" >> $FN_
+  echo "  export PATH=\"\${deactivate_nodejs[1]}\"" >> $FN_
+  echo "  export PS1=\"\${deactivate_nodejs[2]}\"" >> $FN_
+  echo "  echo \"The Node.js virtual environment is deactivated.\"" >> $FN_
+  echo "  echo \"\"" >> $FN_
+  echo "fi" >> $FN_
+  echo "rm \"${ABS_SCRIPTDIR_}/${FN_}\"" >> $FN_
+  popd > /dev/null
+
+  # alias a command to execute the script
+  #
+  alias deactivate-venv=". ${ABS_SCRIPTDIR_}/${FN_}"
+  unset ABS_SCRIPTDIR_
+  unset FN_
+
+  # Mesasge the user
+  #
+  echo "The Node.js virtual environment is activated."
+  echo ""
+  echo "Deactivate the virtual environent with the command 'deactivate-venv'."
+  echo ""
+fi

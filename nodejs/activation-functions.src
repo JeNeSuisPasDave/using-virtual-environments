@@ -1,0 +1,193 @@
+# These functions expect these environment variables to be initialized:
+#
+# SCRIPTDIR_
+#
+
+# function abspath()
+#
+# Finds the abolute path of a file or directory path
+#
+# Borrowed from: http://stackoverflow.com/a/23002317/1392864
+#
+function abspath() {
+    # generate absolute path from relative path
+    # $1     : relative filename
+    # return : absolute path
+    if [ -d "$1" ]; then
+        # dir
+        (cd "$1"; pwd)
+    elif [ -f "$1" ]; then
+        # file
+        if [[ $1 == */* ]]; then
+            echo "$(cd "${1%/*}"; pwd)/${1##*/}"
+        else
+            echo "$(pwd)/$1"
+        fi
+    fi
+}
+
+# function activate_nodejs()
+#
+# Sets the PATH environment variable to point to the local Node.js deployment.
+# Sets the command prompt to be prefixed with '(js)'. Adds a
+# deactivate-project alias
+#
+# Takes an argument that is the relative path to the base deployment directory.
+# For example ".jslcl/0.12.13"
+#
+# Returns an array of:
+#
+#  [0]: 1 if activation was performed; otherwise, 0
+#  [1]: the Node.js bin path
+#  [2]: new PATH value
+#  [3]: new PS1 values
+#
+activate_nodejs() {
+  # Initialize result
+  #
+  local RESULT_=( "0" "" "" "" )
+  activate_nodejs=( ${RESULT_[@]} )
+
+  # Check args
+  #
+  if [[ 2 < $# ]]; then
+    echo "ERROR: too many arguments for 'activate_nodejs()'." > /dev/stderr
+    return 1
+  fi
+  if [ -z "$1" ]; then
+    echo -n "ERROR: missing base directory relative path for "
+    echo "'activate_nodejs()'."  > /dev/stderr
+    return 1
+  fi
+
+  # Capture command arg info
+  #
+  local NODEJS_VSN_=`basename "${1}"`
+  local NODEJS_LCL_=`dirname "${1}"`
+  local NODEJS_LCL_BASE_="${NODEJS_LCL_}/${NODEJS_VSN_}"
+  local NODEJS_WD_=`pwd`
+  local NODEJS_BIN_="${NODEJS_WD_}/${NODEJS_LCL_BASE_}/bin"
+
+  # Make sure Node.js has a local deployment
+  #
+  if [[ ! -d "${NODEJS_BIN_}" ]]; then
+    echo "ERROR: Node.js is not installed at '${NODEJS_BIN_}'." > /dev/stderr
+    return 2
+  fi
+  if [[ ! -f "${NODEJS_BIN_}/node" ]]; then
+    echo "ERROR: Node.js is not installed at '${NODEJS_BIN_}'." > /dev/stderr
+    return 2
+  fi
+
+  # Check whether the local Node.js is already active
+  #
+  local NEW_PATH_=""
+  local IFS_SAVE_="${IFS}"
+  IFS=':'
+  local PATH_PARTS_=($PATH)
+  IFS="${IFS_SAVE_}"
+
+  local FOUND_=0
+  for PART_ in "${PATH_PARTS_[@]}"
+  do
+    if [[ "${NODEJS_BIN_}" == "${PART_}" ]]; then
+      FOUND_=1
+      break
+    fi
+  done
+
+  # If Node.js is not active, the add it to the path and prefix the
+  # command prompt iwth '(js)'
+  #
+  if (( 0 == $FOUND_ )); then
+    # Update PATH and command prompt
+    #
+    PATH="${NODEJS_BIN_}:${PATH}"
+    PS1="(js)${PS1}"
+    RESULT_=( "1" "${NODEJS_BIN_}" "${PATH}" "${PS1}" )
+    activate_nodejs=( ${RESULT_[@]} )
+  fi
+
+  # Get out
+  #
+  return 0
+}
+
+# function deactivate_nodejs()
+#
+# Removes the local Node.js deployment from the PATH environment variable.
+# Removes the '(js)' prefix from the command prompt.
+#
+# Takes an argument that is the full path to the base deployment directory.
+# For example "/Users/myhome/project/.jslcl/0.12.13"
+#
+# Returns an array of:
+#
+#  [0]: 1 if deactivation was performed; otherwise, 0
+#  [1]: new PATH value
+#  [2]: new PS1 values
+#
+deactivate_nodejs() {
+  # Initialize result
+  #
+  local RESULT_=( "0" "" "" )
+  deactivate_nodejs=( ${RESULT_[@]} )
+
+  # Check args
+  #
+  if [[ 2 < $# ]]; then
+    echo "ERROR: too many arguments for 'deactivate_nodejs()'." > /dev/stderr
+    return 1
+  fi
+  if [ -z "$1" ]; then
+    echo -n "ERROR: missing base directory full path for "
+    echo "'deactivate_nodejs()'." > /dev/stderr
+    return 1
+  fi
+  NODEJS_BIN_="${1}"
+
+  # Make the new path
+  #
+  local NEW_PATH_=""
+
+  # Check whether the local Node.js is already active, and build
+  # a new PATH without Node.js while checking.
+  #
+  local NEW_PATH_=""
+  local IFS_SAVE_="${IFS}"
+  IFS=':'
+  local PATH_PARTS_=($PATH)
+  IFS="${IFS_SAVE_}"
+
+  local FOUND_=0
+  for PART_ in "${PATH_PARTS_[@]}"
+  do
+    if [[ "${NODEJS_BIN_}" == "${PART_}" ]]; then
+      FOUND_=1
+      continue
+    fi
+    if [[ -z "${NEW_PATH_}" ]]; then
+      NEW_PATH_="${PART_}"
+    else
+      NEW_PATH_="${NEW_PATH_}:${PART_}"
+    fi
+  done
+
+  # Build a new command prompt without a '(js)' prefix
+  #
+  local RE_='s/^(.*)\(js\)(.*)$/\1\2/'
+  local NEW_PS1_=`echo "${PS1}" | sed -E ${RE_}`
+
+  # Update the new PATH and command prompt, if necessary
+  #
+  if (( 1 == $FOUND_ )); then
+    PATH="${NEW_PATH_}"
+    PS1="${NEW_PS1_}"
+    RESULT_=( "1" "${PATH}" "${PS1}" )
+    deactivate_nodejs=( ${RESULT_[@]} )
+  fi
+
+  # Get out
+  #
+  return 0
+}
