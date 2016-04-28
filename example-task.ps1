@@ -46,7 +46,7 @@ If (0 -ne $errcode) {
     Exit
 }
 
-# Do it!
+# Do something useful here
 #
 Write-Output ""
 Write-Output "OK. Done!"

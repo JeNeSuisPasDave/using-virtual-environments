@@ -78,6 +78,6 @@ fi
 #
 echo ""
 echo "OK. Virtual environment for Node.js ${NODEJS_VSN_} is created."
-echo "Use the command '. activate_project.src' to activate;"
-echo "Use command 'deactivate_project' to deactivate."
+echo "Use the command '. activate-venv.src' to activate;"
+echo "Use command 'deactivate-venv to deactivate."
 echo ""
