@@ -94,24 +94,6 @@ If ((-not (Test-Version $vsn -IsAtLeast $minVsn)) `
     Exit
 }
 
-# Add the local Node.js bin directory to the PATH
-#
-$nodejsBinPath = "$cwd\$jslclDir"
-[System.Collections.ArrayList]$pathParts = $Env:Path.split(';')
-If ($pathParts.Contains("$nodejsBinPath")) {
-    $pathParts.Remove($nodejsBinPath)
-    $Env:Path = $pathParts -Join ';'
-}
-$Env:Path = "$nodejsBinPath" + ";" +  "$Env:Path"
-
-# Remove the local Node.js bin directory from the Path
-#
-[System.Collections.ArrayList]$pathParts = $Env:Path.split(';')
-If ($pathParts.Contains("$nodejsBinPath")) {
-    $pathParts.Remove($nodejsBinPath)
-    $Env:Path = $pathParts -Join ';'
-}
-
 # Done!
 #
 Write-Output ""
