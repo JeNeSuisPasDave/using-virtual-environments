@@ -16,9 +16,9 @@ Examples are primarily developed on OS X, but where possible examples are also p
 * [Using Virtual Environments - Python II](https://www.develves.net/blogs/asd/2016-02-18-using-virtual-environments-python-2/)
 * [Using Virtual Environments - Ruby I](https://www.develves.net/blogs/asd/2016-03-17-using-virtual-environments-ruby-1/)
 * [Using Virtual Environments - Ruby II](https://www.develves.net/blogs/asd/2016-04-07-using-virtual-environments-ruby-2/)
-* Using Virtual Environments - Node.js _(coming soon)_
+* [Using Virtual Environments - Node.js](https://www.develves.net/blogs/asd/2016-04-28-using-virtual-environments-nodejs/)
 
-_Note: Posts on Node.js and Go are forthcoming._
+_Note: A post on Go is forthcoming._
 
 ## Branches
 
