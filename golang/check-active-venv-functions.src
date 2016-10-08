@@ -1,0 +1,80 @@
+# NOTE: expect that this is preceded by:
+# source check-functions.src
+#
+
+#NOTE: expecting these globals to be set:
+#
+# SCRIPTDIR_
+# SCRIPTNAME_
+# GOLANG_LCL_
+# GOLANG_VSN_
+# GO_VSN_EXP_
+# GO_VSN_MAX_
+#
+
+# function is_venv_golang_active()
+#
+# Checks whether the local Go virtual environment is active
+#
+# Exit code is 0 if the virtual environment is active.
+#
+is_venv_golang_active() {
+  `which -s go`
+  local GOLANG_IN_PATH_=$?
+  if (( 0 != GOLANG_IN_PATH_ )); then
+    echo "ERROR: The Go virtual environment is not active." > /dev/stderr
+    echo "" > /dev/stderr
+    return 1
+  else
+    local GOLANG_ROOT_EXP_=${SCRIPTDIR_}\/..\/${GOLANG_LCL_}\/${GOLANG_VSN_}
+    local GOLANG_BIN_EXP_=${GOLANG_ROOT_EXP_}\/go\/bin
+    GOLANG_BIN_EXP_=`abspath "${GOLANG_BIN_EXP_}"`
+    local GO_PATH_=`which go`
+    local GOLANG_BIN_ACT_=`dirname ${GO_PATH_}`
+    if [[ "${GOLANG_BIN_EXP_}" != "${GOLANG_BIN_ACT_}" ]]; then
+      echo "ERROR: The Go virtual environment is not active." > /dev/stderr
+      echo "" > /dev/stderr
+      return 1
+    fi
+  fi
+
+  # Get out
+  #
+  return 0
+}
+
+# function is_golang_version_correct()
+#
+# Checks whether the version of Go is correct.
+#
+# Exit code is 0 if the Go version is correct.
+#
+is_golang_version_correct() {
+  local GO_VSN_ACT_=`go version`
+  parse_version "${GO_VSN_ACT_}"
+  if (( 0 != $? )); then
+    echo "ERROR: failed to parse Go version" > /dev/stderr
+    echo "" > /dev/stderr
+    return 1
+  else
+    GO_VSN_ACT_="${parse_version[0]}.${parse_version[1]}"
+    GO_VSN_ACT_="${GO_VSN_ACT_}.${parse_version[2]}"
+    version_is_at_least "${GO_VSN_EXP_}" "${GO_VSN_ACT_}"
+    local GO_VSN_MIN_OK_=$version_is_at_least
+    version_is_less_than "${GO_VSN_MAX_}" "${GO_VSN_ACT_}"
+    local GO_VSN_MAX_OK_=$version_is_less_than
+    if (( 0 == ${GO_VSN_MIN_OK_} )) \
+      || (( 0 == ${GO_VSN_MAX_OK_} )); then
+      echo
+      echo -n "ERROR: Expecting Go ${GO_VSN_EXP_} or later, " > /dev/stderr
+      echo "up to ${GO_VSN_MAX_}." > /dev/stderr
+      echo "Found ${GO_VSN_ACT_}" > /dev/stderr
+      echo "" > /dev/stderr
+      return 1
+    fi
+  fi
+
+  # Get out
+  #
+  return 0
+}

@@ -1,0 +1,154 @@
+# NOTE: expect that this is preceded by:
+# source check-functions.src
+# source get-glide-functions.src
+#
+
+#NOTE: expecting these globals to be set:
+#
+# SCRIPTDIR_
+# SCRIPTNAME_
+# GLIDE_VSN_EXP_
+# GLIDE_VSN_MAX_
+#
+
+# function install_glide()
+#
+# Accepts an optional argument, the expected glide version
+#
+# Installs glide if it is not already installed
+#
+install_glide() {
+
+  local TAG=""
+  if [[ -n "$1" ]]; then
+    TAG="v$1"
+  fi
+  verifyGoInstallation
+  if (( 0 != $? )); then
+    return 1
+  fi
+
+  initArch
+  if (( 0 != $? )); then
+    return 1
+  fi
+  local ARCH="$initArch"
+
+  initOS
+  if (( 0 != $? )); then
+    return 1
+  fi
+  local OS="$initOS"
+
+  downloadFile "$TAG"
+  if (( 0 != $? )); then
+    return 1
+  fi
+  local GLIDE_TMP_FILE="$downloadFile"
+  local LGOBIN="$GOBIN"
+
+  installFile "${GLIDE_TMP_FILE}" "${OS}" "${ARCH}" "$LGOBIN"
+  if (( 0 != $? )); then
+    return 1
+  fi
+
+  testVersion "$LGOBIN"
+  if (( 0 != $? )); then
+    return 1
+  fi
+
+  # Get out
+  #
+  return 0
+}
+
+# function is_glide_installed()
+#
+# Checks whether glide is installed, but does it silently
+#
+# Exit code is 0 if glide is available and installed in $GOBIN
+#
+is_glide_installed() {
+  `which -s glide`
+  local GLIDE_IN_PATH_=$?
+  if (( 0 != GLIDE_IN_PATH_ )); then
+    return 1
+  else
+    local GLIDE_BIN_EXP_="${GOBIN}"
+    local GLIDE_PATH_=`which glide`
+    local GLIDE_BIN_ACT_=`dirname ${GLIDE_PATH_}`
+    if [[ "${GLIDE_BIN_EXP_}" != "${GLIDE_BIN_ACT_}" ]]; then
+      return 1
+    fi
+  fi
+
+  # Get out
+  #
+  return 0
+}
+
+# function is_glide_available()
+#
+# Checks whether glide is installed
+#
+# Exit code is 0 if glide is available.
+#
+is_glide_available() {
+  `which -s glide`
+  local GLIDE_IN_PATH_=$?
+  if (( 0 != GLIDE_IN_PATH_ )); then
+    echo "ERROR: Glide is not installed." > /dev/stderr
+    echo "" > /dev/stderr
+    return 1
+  else
+    local GLIDE_BIN_EXP_="${GOBIN}"
+    local GLIDE_PATH_=`which glide`
+    local GLIDE_BIN_ACT_=`dirname ${GLIDE_PATH_}`
+    if [[ "${GLIDE_BIN_EXP_}" != "${GLIDE_BIN_ACT_}" ]]; then
+      echo "ERROR: Glide is not installed" \
+        "in the Go virtual environment." > /dev/stderr
+      echo "" > /dev/stderr
+      return 1
+    fi
+  fi
+
+  # Get out
+  #
+  return 0
+}
+
+# function is_glide_version_correct()
+#
+# Checks whether the version of Glide is correct.
+#
+# Exit code is 0 if the Glide version is correct.
+#
+is_glide_version_correct() {
+  local GLIDE_VSN_ACT_=`glide -v`
+  parse_version "${GLIDE_VSN_ACT_}"
+  if (( 0 != $? )); then
+    echo "ERROR: failed to parse Glide version" > /dev/stderr
+    echo "" > /dev/stderr
+    return 1
+  else
+    GLIDE_VSN_ACT_="${parse_version[0]}.${parse_version[1]}"
+    GLIDE_VSN_ACT_="${GLIDE_VSN_ACT_}.${parse_version[2]}"
+    version_is_at_least "${GLIDE_VSN_EXP_}" "${GLIDE_VSN_ACT_}"
+    local GLIDE_VSN_MIN_OK_=$version_is_at_least
+    version_is_less_than "${GLIDE_VSN_MAX_}" "${GLIDE_VSN_ACT_}"
+    local GLIDE_VSN_MAX_OK_=$version_is_less_than
+    if (( 0 == ${GLIDE_VSN_MIN_OK_} )) \
+      || (( 0 == ${GLIDE_VSN_MAX_OK_} )); then
+      echo
+      echo -n "ERROR: Expecting Glide ${GLIDE_VSN_EXP_} or later, " > /dev/stderr
+      echo "up to ${GLIDE_VSN_MAX_}." > /dev/stderr
+      echo "Found ${GLIDE_VSN_ACT_}" > /dev/stderr
+      echo "" > /dev/stderr
+      return 1
+    fi
+  fi
+
+  # Get out
+  #
+  return 0
+}

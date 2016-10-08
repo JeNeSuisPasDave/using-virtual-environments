@@ -1,0 +1,6 @@
+package: .
+import:
+- package: github.com/armon/go-metrics
+- package: github.com/hashicorp/go-msgpack
+  subpackages:
+  - codec

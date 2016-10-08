@@ -1,0 +1,211 @@
+# NOTE: this code is lifted from https://github.com/Masterminds/glide.sh,
+# from the get.sh script
+#
+
+# function downloadFIle()
+#
+# Downloads the glide binary from GitHub. If a TAG is supplied, then
+# it will download that specific version
+#
+# Returns the path to the downloaded file
+#
+# Exit code is 0 if success; non-zero integer if failure.
+#
+downloadFile() {
+  downloadFile=""
+
+  # Check args
+  #
+  if [[ 1 < $# ]]; then
+    echo "ERROR: too many arguments for 'downloadFile()'." > /dev/stderr
+    return 1
+  fi
+
+  # local variable initialization
+  #
+  local TAG=""
+  local PROJECT_NAME="glide"
+  local GH_REPO_=""
+  local LATEST_RELEASE_URL=""
+  local LATEST_RELEASE_JSON=""
+  local GLIDE_DIST=""
+  local DOUNLOAD_URL=""
+  local GLIDE_TMP_FILE=""
+
+  if [ ! -z "$1" ]; then
+    TAG="$1"
+  elif type "curl" > /dev/null; then
+    TAG=$(curl -s https://glide.sh/version)
+  elif type "wget" > /dev/null; then
+    TAG=$(wget -q -O - https://glide.sh/version)
+  fi
+  GH_REPO_="https://api.github.com/repos/Masterminds/$PROJECT_NAME"
+  LATEST_RELEASE_URL="$GH_REPO_/releases/tags/$TAG"
+  if type "curl" > /dev/null; then
+    LATEST_RELEASE_JSON=$(curl -s "$LATEST_RELEASE_URL")
+  elif type "wget" > /dev/null; then
+    LATEST_RELEASE_JSON=$(wget -q -O - "$LATEST_RELEASE_URL")
+  fi
+  GLIDE_DIST="glide-$TAG-$OS-$ARCH.tar.gz"
+  # || true forces this command to not catch error if grep does not find anything
+  DOWNLOAD_URL=$(echo "$LATEST_RELEASE_JSON" | grep 'browser_' | \
+    cut -d\" -f4 | grep "$GLIDE_DIST") || true
+  if [ -z "$DOWNLOAD_URL" ]; then
+    echo "Sorry, we dont have a dist for your system: $OS $ARCH" > /dev/stderr
+    echo "You can ask one here: $GH_REPO_/issues" > /dev/stderr
+    return 1
+  else
+    GLIDE_TMP_FILE="/tmp/$GLIDE_DIST"
+    echo "Downloading $DOWNLOAD_URL"
+    if type "curl" > /dev/null; then
+      curl -L "$DOWNLOAD_URL" -o "$GLIDE_TMP_FILE"
+    elif type "wget" > /dev/null; then
+      wget -q -O "$GLIDE_TMP_FILE" "$DOWNLOAD_URL"
+    fi
+  fi
+
+  downloadFile="$GLIDE_TMP_FILE"
+  return 0
+}
+
+initArch() {
+  initArch="unrecognized"
+  local ARCH=$(uname -m)
+  case $ARCH in
+    armv5*) ARCH="armv5";;
+    armv6*) ARCH="armv6";;
+    armv7*) ARCH="armv7";;
+    aarch64) ARCH="arm64";;
+    x86) ARCH="386";;
+    x86_64) ARCH="amd64";;
+    i686) ARCH="386";;
+    i386) ARCH="386";;
+  esac
+  initArch="$ARCH"
+  return 0
+}
+
+initOS() {
+  initOS="unrecognized"
+  local OS=$(echo `uname`|tr '[:upper:]' '[:lower:]')
+
+  if [[ "${OS}" == mingw* ]] ; then
+    # Minimalist GNU for Windows
+    OS='windows'
+  fi
+  initOS="$OS"
+  return 0
+}
+
+# function installFile()
+#
+# copies the downloaded glide binary to the $GOBIN directory.
+#
+# Takes four arguments:
+#
+#   1. The path to the downloaded glide binary archive
+#   2. The OS string determied by initOS()
+#   3. The ARCH string determined by initArch()
+#   4. The GOBIN path
+#
+#
+# Exit code is 0 if success; non-zero integer if failure.
+#
+installFile() {
+  # Check args
+  #
+  if [[ 4 < $# ]]; then
+    echo "ERROR: too many arguments for 'installFile()'." > /dev/stderr
+    return 1
+  fi
+  if [[ 4 > $# ]]; then
+    echo "ERROR: too few arguments for 'installFile()'." > /dev/stderr
+    return 1
+  fi
+
+  local GLIDE_TMP_FILE="$1"
+  local OS="$2"
+  local ARCH="$3"
+  local LGOBIN="$4"
+
+  local PROJECT_NAME="glide"
+  local GLIDE_TMP="/tmp/$PROJECT_NAME"
+  mkdir -p "$GLIDE_TMP"
+  tar xf "$GLIDE_TMP_FILE" -C "$GLIDE_TMP"
+  local GLIDE_TMP_BIN="$GLIDE_TMP/$OS-$ARCH/$PROJECT_NAME"
+  cp "$GLIDE_TMP_BIN" "$LGOBIN"
+}
+
+
+# function testVersion()
+#
+# check the glide version.
+#
+# Takes one arguments:
+#
+#   1. The GOBIN path
+#
+# Exit code is 0 if success; non-zero integer if failure.
+#
+testVersion() {
+  # Check args
+  #
+  if [[ 1 < $# ]]; then
+    echo "ERROR: too many arguments for 'testVersion()'." > /dev/stderr
+    return 1
+  fi
+  if [[ 1 > $# ]]; then
+    echo "ERROR: too few arguments for 'testVersion()'." > /dev/stderr
+    return 1
+  fi
+
+  local LGOBIN="$1"
+
+  # set +e
+  local PROJECT_NAME="glide"
+  local GLIDE="$(which ${PROJECT_NAME})"
+  if [ "$?" = "1" ]; then
+    echo -n "$PROJECT_NAME not found. " > /dev/stderr
+    echo "Did you add "'$LGOBIN'" to your "'$PATH?' > /dev/stderr
+    return 1
+  fi
+  if [[ "$GLIDE" != "$LGOBIN/glide" ]]; then
+    echo -n "$PROJECT_NAME not installed to "'$LGOBIN'". " > /dev/stderr
+    echo "Did you add "'$LGOBIN'" to your "'$PATH?' > /dev/stderr
+    return 1
+  fi
+  local GLIDE_VERSION=$($PROJECT_NAME -v)
+  echo "$GLIDE_VERSION installed succesfully"
+  return 0
+}
+
+verifyGoInstallation() {
+  verifyGoInstallation=""
+  local PROJECT_NAME="glide"
+  local GO=$(which go)
+  if [ "$?" = "1" ]; then
+    echo "$PROJECT_NAME needs go. Please intall it first." > /dev/stderr
+    return 1
+  fi
+  if [ -z "$GOPATH" ]; then
+    echo -n "$PROJECT_NAME needs environment variable " > /dev/stderr
+    echo ""'$GOPATH'". Set it before continue." > /dev/stderr
+    return 1
+  fi
+  if [ -n "$GOBIN" ]; then
+    if [ ! -d "$GOBIN" ]; then
+      echo -n "$GOBIN "'($GOBIN)'" folder not found. " > /dev/stderr
+      echo "Please create it before continue." > /dev/stderr
+      return 1
+    fi
+    verifyGoInstallation="$GOBIN"
+  else
+    if [ ! -d "$GOPATH/bin" ]; then
+      echo -n "$GOPATH/bin "'($GOPATH/bin)'" folder not found. " > /dev/stderr
+      echo "Please create it before continue." > /dev/stderr
+      return 1
+    fi
+    verifyGoInstallation="$GOPATH/bin"
+  fi
+  return 0
+}

@@ -2,6 +2,10 @@
 #
 .DS_Store
 
+# logs
+#
+*.log
+
 # Python extras
 #
 venv2*/
@@ -25,6 +29,16 @@ ruby/deactivate-project.ps1
 nodejs/deactivate-venv.src
 nodejs/deactivate-venv.ps1
 node_modules/
+
+# Go
+#
+.golcl
+bin/
+pkg/
+src/
+vendor/
+golang/deactivate-venv.src
+golang/deactivate-venv.ps1
 
 # Sublime Text
 #

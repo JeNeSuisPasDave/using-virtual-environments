@@ -17,8 +17,7 @@ Examples are primarily developed on OS X, but where possible examples are also p
 * [Using Virtual Environments - Ruby I](https://www.develves.net/blogs/asd/2016-03-17-using-virtual-environments-ruby-1/)
 * [Using Virtual Environments - Ruby II](https://www.develves.net/blogs/asd/2016-04-07-using-virtual-environments-ruby-2/)
 * [Using Virtual Environments - Node.js](https://www.develves.net/blogs/asd/2016-04-28-using-virtual-environments-nodejs/)
-
-_Note: A post on Go is forthcoming._
+* [Using Virtual Environments - Go](https://www.develves.net/blogs/asd/2016-10-09-using-virtual-environments-go/)
 
 ## Branches
 
@@ -35,3 +34,5 @@ _Note: A post on Go is forthcoming._
 * **example-node012** demonstrates script for creating, provisioning (with dependency management) and upgrading a Node.js 0.12.13 virtual environment.
 
 * **example-node44** demonstrates script for creating, provisioning (with dependency management) and upgrading a Node.js 4.4.2 virtual environment.
+
+* **example-go171** demonstrates script for creating, provisioning (with dependency management) and upgrading a Go 1.7.1 virtual environment.

@@ -1,0 +1,263 @@
+# These functions expect these environment variables to be initialized:
+#
+# SCRIPTDIR_
+#
+
+# function abspath()
+#
+# Finds the abolute path of a file or directory path
+#
+# Borrowed from: http://stackoverflow.com/a/23002317/1392864
+#
+function abspath() {
+    # generate absolute path from relative path
+    # $1     : relative filename
+    # return : absolute path
+    if [ -d "$1" ]; then
+        # dir
+        (cd "$1"; pwd)
+    elif [ -f "$1" ]; then
+        # file
+        if [[ $1 == */* ]]; then
+            echo "$(cd "${1%/*}"; pwd)/${1##*/}"
+        else
+            echo "$(pwd)/$1"
+        fi
+    fi
+}
+
+# function activate_golang()
+#
+# Sets GOROOT to the local Go deployment, and GOPATH and GOBIN to the
+# Go workspace. Adds GOROOT and GOBIN to the PATH
+# Sets the command prompt to be prefixed with '(go)'. Adds a
+# deactivate-project alias
+#
+# Takes two arguments, the local Go installation path and the workspace
+# path. For example, ".golcl-1.6.3" "consul". Paths can be relative.
+#
+# Returns an array of:
+#
+#  [0]: 1 if activation was performed; otherwise, 0
+#  [1]: the full path to the local Go installation
+#  [2]: the full path to the local Go workspace
+#  [3]: new PATH value
+#  [4]: new PS1 values
+#
+activate_golang() {
+  # Initialize result
+  #
+  local RESULT_=( "0" "" "" "" "" )
+  activate_golang=( ${RESULT_[@]} )
+
+  # Check args
+  #
+  if [[ 2 < $# ]]; then
+    echo "ERROR: too many arguments for 'activate_golang()'." > /dev/stderr
+    return 1
+  fi
+  if [[ 2 > $# ]]; then
+    echo "ERROR: too few arguments for 'activate_golang()'." > /dev/stderr
+    return 1
+  fi
+  if [ -z "$1" ]; then
+    echo -n "ERROR: missing Go installation directory for "
+    echo "'activate_golang()'."  > /dev/stderr
+    return 1
+  fi
+  if [ -z "$2" ]; then
+    echo -n "ERROR: missing workspace directory for "
+    echo "'activate_golang()'."  > /dev/stderr
+    return 1
+  fi
+
+  # Capture command arg info
+  #
+  local GOLANG_ROOT_="${1}"
+  local GOLANG_PATH_="${2}"
+  local GOLANG_BIN_="${GOLANG_PATH_}/bin"
+
+  # Make sure Go has a local deployment
+  #
+  if [[ ! -d "${GOLANG_ROOT_}/go" ]]; then
+    echo "ERROR: Go is not installed at '${GOLANG_ROOT_}'." > /dev/stderr
+    return 2
+  fi
+  if [[ ! -d "${GOLANG_ROOT_}/go/bin" ]]; then
+    echo "ERROR: Go is not installed at '${GOLANG_ROOT_}'." > /dev/stderr
+    return 2
+  fi
+  if [[ ! -f "${GOLANG_ROOT_}/go/bin/go" ]]; then
+    echo "ERROR: Go is not installed at '${GOLANG_ROOT_}'." > /dev/stderr
+    return 2
+  fi
+
+  # Check whether the local Go is already active
+  #
+  local NEW_PATH_=""
+  local IFS_SAVE_="${IFS}"
+  IFS=':'
+  local PATH_PARTS_=($PATH)
+  IFS="${IFS_SAVE_}"
+
+  local FOUND_=0
+  for PART_ in "${PATH_PARTS_[@]}"
+  do
+    if [[ "${GOLANG_ROOT_}/go/bin" == "${PART_}" ]]; then
+      FOUND_=1
+      break
+    fi
+  done
+
+  # If Go is not active, set the Go environment variables, add GOROOT and
+  # GOBIN to the path and prefix the command prompt with '(go)'
+  #
+  if (( 0 == $FOUND_ )); then
+    # Set GOROOT, GOPATH, GOBIN
+    #
+    local GOLANG_BASE_=`abspath "${GOLANG_ROOT_}"`
+    export GO_PREVGOROOT_=$GOROOT
+    export GOROOT="${GOLANG_BASE_}/go"
+    local RMDIR_GOPATH_=1
+    if [[ ! -d "${GOLANG_PATH_}" ]]; then
+      mkdir -p "${GOLANG_PATH_}" > /dev/null
+      RMDIR_GOPATH_=0
+    fi
+    export GO_PREVGOPATH_=$GOPATH
+    export GOPATH=`abspath "${GOLANG_PATH_}"`
+    local RMDIR_GOBIN_=1
+    if [[ ! -d "${GOLANG_BIN_}" ]]; then
+      mkdir -p "${GOLANG_BIN_}" > /dev/null
+      RMDIR_GOBIN_=0
+    fi
+    export GO_PREVGOBIN_=$GOBIN
+    export GOBIN=`abspath "${GOLANG_BIN_}"`
+    # clean up intermediate directories
+    # (necessary to allow subsequent git clone)
+    if (( 0 == $RMDIR_GOPATH_ )); then
+      rm -r "${GOPATH}"
+    elif (( 0 == $RMDIR_GOBIN_ )); then
+      rm -r "${GOBIN}"
+    fi
+
+    # Update PATH and command prompt
+    #
+    PATH="${GOBIN}:${GOROOT}/bin:${PATH}"
+    PS1="(go)${PS1}"
+    RESULT_=( "1" "${GOLANG_BASE_}" "${GOPATH}" "${PATH}" "${PS1}" )
+    activate_golang=( ${RESULT_[@]} )
+  fi
+
+  # Get out
+  #
+  return 0
+}
+
+# function deactivate_golang()
+#
+# Removes the local Go deployment from the PATH environment variable.
+# Removes the '(go)' prefix from the command prompt.
+#
+# Takes two arguments, the full path to the local Go installation and the
+# full path to the Go workspace. These would be returned from
+# activate_golang().
+#
+# Returns an array of:
+#
+#  [0]: 1 if deactivation was performed; otherwise, 0
+#  [1]: new PATH value
+#  [2]: new PS1 values
+#
+deactivate_golang() {
+  # Initialize result
+  #
+  local RESULT_=( "0" "" "" )
+  deactivate_golang=( ${RESULT_[@]} )
+
+  # Check args
+  #
+  if [[ 2 < $# ]]; then
+    echo "ERROR: too many arguments for 'deactivate_golang()'." > /dev/stderr
+    return 1
+  fi
+  if [ -z "$1" ]; then
+    echo -n "ERROR: missing base directory full path for "
+    echo "'deactivate_golang()'." > /dev/stderr
+    return 1
+  fi
+  local GOLANG_ROOT_="${1}/go/bin"
+  local GOLANG_BIN_="${2}/bin"
+
+  # Make the new path
+  #
+  local NEW_PATH_=""
+
+  # Check whether the local Go is already active, and build
+  # a new PATH without Go while checking.
+  #
+  local NEW_PATH_=""
+  local IFS_SAVE_="${IFS}"
+  IFS=':'
+  local PATH_PARTS_=($PATH)
+  IFS="${IFS_SAVE_}"
+
+  local FOUND_=0
+  for PART_ in "${PATH_PARTS_[@]}"
+  do
+    if [[ "${GOLANG_ROOT_}" == "${PART_}" ]]; then
+      FOUND_=1
+      continue
+    fi
+    if [[ "${GOLANG_BIN_}" == "${PART_}" ]]; then
+      FOUND_=1
+      continue
+    fi
+    if [[ -z "${NEW_PATH_}" ]]; then
+      NEW_PATH_="${PART_}"
+    else
+      NEW_PATH_="${NEW_PATH_}:${PART_}"
+    fi
+  done
+
+  # Build a new command prompt without a '(go)' prefix
+  #
+  local RE_='s/^(.*)\(go\)(.*)$/\1\2/'
+  local NEW_PS1_=`echo "${PS1}" | sed -E ${RE_}`
+
+  # Update the new PATH and command prompt, if necessary
+  #
+  if (( 1 == $FOUND_ )); then
+    PATH="${NEW_PATH_}"
+    PS1="${NEW_PS1_}"
+    RESULT_=( "1" "${PATH}" "${PS1}" )
+    deactivate_golang=( ${RESULT_[@]} )
+  fi
+
+  # Unset the GO variables
+  #
+  if [[ -n "$GO_PREVGOROOT_" ]]; then
+    export GOROOT=$GO_PREVGOROOT_
+    unset GO_PREVGOROOT_
+  elif [[ -n "$GOROOT" ]]; then
+    unset GOROOT
+    unset GO_PREVGOROOT_
+  fi
+  if [[ -n "$GO_PREVGOPATH_" ]]; then
+    export GOPATH=$GO_PREVGOPATH_
+    unset GO_PREVGOPATH_
+  elif [[ -n "$GOPATH" ]]; then
+    unset GOPATH
+    unset GO_PREVGOPATH_
+  fi
+  if [[ -n "$GO_PREVGOBIN_" ]]; then
+    export GOBIN=$GO_PREVGOBIN_
+    unset GO_PREVGOBIN_
+  elif [[ -n "$GOBIN" ]]; then
+    unset GOBIN
+    unset GO_PREVGOBIN_
+  fi
+
+  # Get out
+  #
+  return 0
+}

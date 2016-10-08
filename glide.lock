@@ -1,0 +1,10 @@
+hash: a1e17d2c16812cb2d7c3664a05e32850e2dd4813d31a84b3e94b9535ce9c24a1
+updated: 2016-10-07T03:14:22.002908973-05:00
+imports:
+- name: github.com/armon/go-metrics
+  version: 3df31a1ada83e310c2e24b267c8e8b68836547b4
+- name: github.com/hashicorp/go-msgpack
+  version: fa3f63826f7c23912c15263591e65d54d080b458
+  subpackages:
+  - codec
+testImports: []
